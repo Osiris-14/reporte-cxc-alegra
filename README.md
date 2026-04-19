@@ -51,6 +51,5 @@ Siempre consumiendo la última versión del CSV desde GitHub.
 - API REST (Alegra)
 - Git / GitHub
 
----
 
-## 📂 Estructura del proyecto
+
