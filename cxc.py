@@ -2,8 +2,8 @@ import requests
 import pandas as pd
 import os
 
-EMAIL = "autoherreria@gmail.com"
-TOKEN = "140eb7e7e5726cd8b60b"
+EMAIL = os.getenv("ALEGRA_EMAIL")
+TOKEN = os.getenv("ALEGRA_TOKEN")
 
 URL = "https://api.alegra.com/api/v1/invoices"
 
