@@ -2,9 +2,9 @@ name: Ejecutar CxC diario
 
 on:
   schedule:
-    - cron: '0 11 * * *'    # 7:00 AM RD
-    - cron: '30 15 * * *'   # 11:30 AM RD
-    - cron: '0 21 * * *'    # 5:00 PM RD
+    - cron: '30 10 * * *'   # Runs at 10:30   # 6:30 AM RD
+    - cron: '0 15 * * *'    # Runs at 15:00   # 11:00 AM RD
+    - cron: '45 20 * * *'   # Runs at 20:45   # 4:45 PM RD
   workflow_dispatch:
 
 jobs:
