@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 import os
+from datetime import timedelta
 
 EMAIL = os.getenv("ALEGRA_EMAIL")
 TOKEN = os.getenv("ALEGRA_TOKEN")
@@ -81,6 +82,15 @@ columnas_finales = [
 
 columnas_existentes = [c for c in columnas_finales if c in df.columns]
 df = df[columnas_existentes]
+
+# ===============================
+# 🔥 AJUSTE DE FECHAS A RD (-4)
+# ===============================
+for col in ["Fecha", "FechaVencimiento"]:
+    if col in df.columns:
+        df[col] = pd.to_datetime(df[col], errors='coerce')
+        df[col] = df[col] - timedelta(hours=4)
+        df[col] = df[col].dt.date
 
 # ===============================
 # EXPORT
