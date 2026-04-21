@@ -1,7 +1,6 @@
 import requests
 import pandas as pd
 import os
-from datetime import timedelta
 
 EMAIL = os.getenv("ALEGRA_EMAIL")
 TOKEN = os.getenv("ALEGRA_TOKEN")
@@ -52,7 +51,7 @@ print("\nColumnas disponibles:")
 print(df.columns.tolist())
 
 # ===============================
-# 🔥 USAR FULL NUMBER (CORRECTO)
+# RENOMBRE
 # ===============================
 rename_map = {
     "numberTemplate.fullNumber": "NumeroComprobante",
@@ -68,7 +67,7 @@ rename_map = {k: v for k, v in rename_map.items() if k in df.columns}
 df.rename(columns=rename_map, inplace=True)
 
 # ===============================
-# 🎯 SELECCIÓN FINAL
+# SELECCIÓN FINAL
 # ===============================
 columnas_finales = [
     "NumeroComprobante",
@@ -84,13 +83,11 @@ columnas_existentes = [c for c in columnas_finales if c in df.columns]
 df = df[columnas_existentes]
 
 # ===============================
-# 🔥 AJUSTE DE FECHAS A RD (-4)
+# 🔥 LIMPIAR FECHAS (SIN CAMBIAR ZONA)
 # ===============================
 for col in ["Fecha", "FechaVencimiento"]:
     if col in df.columns:
-        df[col] = pd.to_datetime(df[col], errors='coerce')
-        df[col] = df[col] - timedelta(hours=4)
-        df[col] = df[col].dt.date
+        df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
 
 # ===============================
 # EXPORT
