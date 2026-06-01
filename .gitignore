@@ -1,0 +1,14 @@
+# Secretos de Google OAuth - NUNCA subir
+token.json
+client_secret*.json
+credentials.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Sistema
+desktop.ini
+.DS_Store
