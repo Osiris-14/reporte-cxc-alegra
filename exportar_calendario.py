@@ -152,27 +152,47 @@ COLOR_POR_HEX = {
 # ---------------------------------------------------------------------------
 def obtener_credenciales():
     creds = None
+
+    # En GitHub Actions el token llega como variable de entorno GOOGLE_TOKEN_JSON.
+    # Lo materializamos como token.json (sobrescribiendo, por si acaso).
+    token_env = os.environ.get("GOOGLE_TOKEN_JSON")
+    if token_env:
+        with open("token.json", "w") as f:
+            f.write(token_env.strip())
+
     if os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
 
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            # Detecta automaticamente el archivo client_secret_*.json
-            candidatos = glob.glob("client_secret*.json") or glob.glob("credentials.json")
-            if not candidatos:
-                raise FileNotFoundError(
-                    "No encontre el JSON de credenciales (client_secret_*.json) en esta carpeta."
-                )
-            archivo_credenciales = candidatos[0]
-            print(f"Usando credenciales: {archivo_credenciales}")
-            flow = InstalledAppFlow.from_client_secrets_file(archivo_credenciales, SCOPES)
-            creds = flow.run_local_server(port=0)
+    # Caso 1: credenciales ya validas -> usarlas tal cual
+    if creds and creds.valid:
+        return creds
 
+    # Caso 2: hay refresh_token -> refrescar sin navegador (esto es lo que pasa en CI)
+    if creds and creds.refresh_token:
+        creds.refresh(Request())
         with open("token.json", "w") as token:
             token.write(creds.to_json())
+        return creds
 
+    # Caso 3: en CI no podemos abrir navegador
+    if os.environ.get("CI"):
+        raise RuntimeError(
+            "No hay credenciales validas en CI. Revisa que el secreto "
+            "GOOGLE_TOKEN_JSON tenga el token.json completo y con refresh_token."
+        )
+
+    # Caso 4: flujo interactivo local (primera vez): abre el navegador
+    candidatos = glob.glob("client_secret*.json") or glob.glob("credentials.json")
+    if not candidatos:
+        raise FileNotFoundError(
+            "No encontre el JSON de credenciales (client_secret_*.json) en esta carpeta."
+        )
+    archivo_credenciales = candidatos[0]
+    print(f"Usando credenciales: {archivo_credenciales}")
+    flow = InstalledAppFlow.from_client_secrets_file(archivo_credenciales, SCOPES)
+    creds = flow.run_local_server(port=0)
+    with open("token.json", "w") as token:
+        token.write(creds.to_json())
     return creds
 
 
