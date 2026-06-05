@@ -2,6 +2,18 @@ import requests
 import pandas as pd
 import os
 
+# Cargar variables de entorno desde un archivo .env local si existe
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.exists(env_path):
+    with open(env_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#"):
+                parts = line.split("=", 1)
+                if len(parts) == 2:
+                    key, val = parts
+                    os.environ[key.strip()] = val.strip().strip("'\"")
+
 EMAIL = os.getenv("ALEGRA_EMAIL")
 TOKEN = os.getenv("ALEGRA_TOKEN")
 

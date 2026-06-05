@@ -12,3 +12,9 @@ venv/
 # Sistema
 desktop.ini
 .DS_Store
+
+# Entorno local
+.env
+
+# Scripts temporales de prueba
+scratch/
