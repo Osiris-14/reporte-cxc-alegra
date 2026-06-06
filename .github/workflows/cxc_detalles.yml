@@ -1,14 +1,15 @@
-name: Ejecutar CxC diario
+name: Ejecutar detalles
 
 on:
-  schedule:
-    - cron: '30 10 * * *'   # Runs at 10:30   # 6:30 AM RD
-    - cron: '0 15 * * *'    # Runs at 15:00   # 11:00 AM RD
-    - cron: '45 20 * * *'   # Runs at 20:45   # 4:45 PM RD
+  workflow_run:
+    workflows: ["Ejecutar CxC diario"]
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
   run-script:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
