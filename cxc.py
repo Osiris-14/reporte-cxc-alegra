@@ -101,13 +101,18 @@ for col in ["Fecha", "FechaVencimiento"]:
     if col in df.columns:
         df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
 
+# Convertir montos a numérico para que el decimal="," funcione correctamente
+for col in ["MontoTotal", "BalancePendiente"]:
+    if col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+
 # ===============================
 # EXPORT
 # ===============================
 current_dir = os.path.dirname(os.path.abspath(__file__))
 output_path = os.path.join(current_dir, "cxc_Cuentasporcobrar.csv")
 
-df.to_csv(output_path, index=False, encoding="utf-8-sig")
+df.to_csv(output_path, index=False, encoding="utf-8-sig", decimal=",")
 
 print(f"\nCSV limpio creado: {output_path}")
 print("Filas:", len(df))
