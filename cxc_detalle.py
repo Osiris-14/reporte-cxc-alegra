@@ -141,7 +141,8 @@ out_pagos = os.path.join(
 df_pagos.to_csv(
     out_pagos,
     index=False,
-    encoding="utf-8-sig"
+    encoding="utf-8-sig",
+    decimal=","
 )
 
 print(f"CSV pagos: {out_pagos} ({len(df_pagos)} filas)")
