@@ -150,9 +150,9 @@ for col in ["FechaFactura", "FechaVencimiento", "FechaPago"]:
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 out_facturas = os.path.join(current_dir, "cxc_Cuentasporcobrar.csv")
-df_facturas.to_csv(out_facturas, index=False, encoding="utf-8-sig")
+df_facturas.to_csv(out_facturas, index=False, encoding="utf-8-sig", decimal=",", sep=";")
 print(f"CSV facturas: {out_facturas}  ({len(df_facturas)} filas)")
 
 out_pagos = os.path.join(current_dir, "cxc_Pagos.csv")
-df_pagos.to_csv(out_pagos, index=False, encoding="utf-8-sig")
+df_pagos.to_csv(out_pagos, index=False, encoding="utf-8-sig", decimal=",", sep=";")
 print(f"CSV pagos:    {out_pagos}  ({len(df_pagos)} filas)")
