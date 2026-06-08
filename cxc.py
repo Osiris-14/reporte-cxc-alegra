@@ -112,7 +112,7 @@ for col in ["MontoTotal", "BalancePendiente"]:
 current_dir = os.path.dirname(os.path.abspath(__file__))
 output_path = os.path.join(current_dir, "cxc_Cuentasporcobrar.csv")
 
-df.to_csv(output_path, index=False, encoding="utf-8-sig", decimal=",")
+df.to_csv(output_path, index=False, encoding="utf-8-sig", decimal=".")
 
 print(f"\nCSV limpio creado: {output_path}")
 print("Filas:", len(df))
