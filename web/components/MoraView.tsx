@@ -24,7 +24,7 @@ export default function MoraView({ dash }: { dash: Dashboard }) {
           <span className="card-title">Vencidas — V06</span>
           <span className="card-badge p-red">{dash.vencidas.length}</span>
         </div>
-        <table className="tb-full">
+        <table className="tb-full tb-stack">
           <thead>
             <tr>
               <th style={{ width: "17%" }}>Comprobante</th>
@@ -38,12 +38,13 @@ export default function MoraView({ dash }: { dash: Dashboard }) {
             {dash.vencidas.length === 0 && <Empty cols={5} />}
             {dash.vencidas.map((r, i) => (
               <tr key={r.comprobante}>
-                <td>{r.comprobante}</td>
-                <td className="client-cell">{r.cliente}</td>
-                <td className="muted a-c">{diaMesAnio(r.fechaVencimiento)}</td>
-                <td className="muted a-c">{diaMesAnio(r.fechaReagendamiento)}</td>
+                <td data-label="Comprobante">{r.comprobante}</td>
+                <td className="client-cell" data-label="Cliente">{r.cliente}</td>
+                <td className="muted a-c" data-label="Fecha 0">{diaMesAnio(r.fechaVencimiento)}</td>
+                <td className="muted a-c" data-label="Reagendamiento">{diaMesAnio(r.fechaReagendamiento)}</td>
                 <td
                   className="a-l"
+                  data-label="Monto atraso"
                   style={i === 0 ? { color: "#c0392b", fontWeight: 600 } : undefined}
                 >
                   {money(r.montoPendiente)}
@@ -69,7 +70,7 @@ export default function MoraView({ dash }: { dash: Dashboard }) {
             {dash.atrasadas.length}
           </span>
         </div>
-        <table className="tb-full">
+        <table className="tb-full tb-stack">
           <thead>
             <tr>
               <th style={{ width: "18%" }}>NCF</th>
@@ -82,10 +83,10 @@ export default function MoraView({ dash }: { dash: Dashboard }) {
             {dash.atrasadas.length === 0 && <Empty cols={4} />}
             {dash.atrasadas.map((r) => (
               <tr key={r.comprobante}>
-                <td>{r.comprobante}</td>
-                <td className="client-cell">{r.cliente}</td>
-                <td className="a-l">{money(r.montoPendiente)}</td>
-                <td className="muted a-c">{diaMesAnio(r.fechaVencimiento)}</td>
+                <td data-label="NCF">{r.comprobante}</td>
+                <td className="client-cell" data-label="Cliente">{r.cliente}</td>
+                <td className="a-l" data-label="Monto pend.">{money(r.montoPendiente)}</td>
+                <td className="muted a-c" data-label="Fecha 0">{diaMesAnio(r.fechaVencimiento)}</td>
               </tr>
             ))}
             {dash.atrasadas.length > 0 && (

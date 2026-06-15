@@ -682,3 +682,377 @@ body {
   border-color: #f6dcc2;
   color: #8a4b16;
 }
+
+/* ===========================================================================
+   RESPONSIVE — móvil (<768), tablet (768–1024), desktop (>1024)
+   Las reglas base de arriba se mantienen 1:1 para desktop. Aquí solo se
+   re-acomodan grids, se evita el scroll horizontal y, en móvil, las tablas
+   se convierten en cards apiladas (label + valor) vía data-label.
+   =========================================================================== */
+
+/* Variantes de grid usadas con clases para poder sobreescribir en breakpoints */
+.metric-row-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.two-col-even {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Nunca permitir scroll horizontal de página */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Alertas: el texto siempre hace wrap (en flex hay que permitir encoger
+   el item y romper palabras largas para que no desborde el ancho). */
+.alert-line {
+  flex-wrap: wrap;
+}
+
+.alert-line > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Bottom bar de navegación — oculta por defecto, solo aparece en móvil */
+.bottombar {
+  display: none;
+}
+
+/* --- TABLET: 768px – 1024px --------------------------------------------- */
+@media (max-width: 1024px) {
+  /* Cards superiores: 4 -> 2 col */
+  .metric-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Cards de estado: 6 -> 3 col */
+  .status-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Tablas hoy/semana de Factory: apiladas en tablet */
+  .two-col-even {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- TABLET estricto: 768px – 1024px — tablas con scroll horizontal ------ */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* La card que contiene una tabla permite scroll horizontal y la tabla
+     conserva un ancho mínimo cómodo (en vez de encogerse). */
+  .card:has(> .tb-full) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .card > .tb-full {
+    min-width: 640px;
+  }
+}
+
+/* --- MÓVIL: < 768px ------------------------------------------------------ */
+@media (max-width: 767px) {
+  /* Tipografía/espaciado más compactos */
+  .view {
+    padding: 14px 12px;
+    gap: 12px;
+  }
+
+  .m-num {
+    font-size: 22px;
+  }
+
+  .sp-num {
+    font-size: 20px;
+  }
+
+  /* Cards superiores: 1 columna */
+  .metric-row,
+  .metric-row-3 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Cards de estado: 2 columnas */
+  .status-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Aging + Peso por estado / tablas Factory: apilados */
+  .two-col,
+  .two-col-even {
+    grid-template-columns: 1fr;
+  }
+
+  /* Topbar / navbar — se adapta sin overflow */
+  .topbar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 50px;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  .tb-left {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .app-sub {
+    display: none;
+  }
+
+  .tb-right {
+    gap: 8px;
+  }
+
+  /* Oculta la pill "Alegra" y el avatar para dejar espacio; mantiene "Datos al" */
+  .tb-right .tb-pill:first-child,
+  .avatar {
+    display: none;
+  }
+
+  /* La nav superior se sustituye por el bottom bar en móvil */
+  .tb-nav {
+    display: none;
+  }
+
+  /* Espacio inferior para que el contenido no quede bajo el bottom bar fijo */
+  .app {
+    padding-bottom: 64px;
+  }
+
+  /* Bottom bar fijo con las dos secciones principales (CXC / Factory) */
+  .bottombar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    background: #fff;
+    border-top: 0.5px solid #e3e3e3;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+    padding: 4px env(safe-area-inset-right) calc(4px + env(safe-area-inset-bottom))
+      env(safe-area-inset-left);
+  }
+
+  .bb-link {
+    flex: 1 1 0;
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-decoration: none;
+    color: #999;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .bb-link i {
+    font-size: 20px;
+  }
+
+  .bb-link-active {
+    color: #e05252;
+  }
+
+  /* Tabs de sección (Resumen/Cobranza/…): scroll horizontal sin wrap */
+  .tabbar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    flex: 0 0 auto;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+
+  /* Tabs de mes (Factory): scroll horizontal sin wrap */
+  .month-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .month-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .month-tab {
+    flex: 0 0 auto;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Botón apertura de alertas: target touch */
+  .alerts-head {
+    min-height: 44px;
+  }
+
+  /* Pills de estado clicables: target touch cómodo */
+  .spill {
+    min-height: 72px;
+  }
+
+  /* Alertas: ancho completo y texto con wrap */
+  .alert-line,
+  .alert-box {
+    width: 100%;
+  }
+
+  .alert-line span,
+  .alert-txt {
+    overflow-wrap: anywhere;
+  }
+
+  /* ---- Tablas -> cards apiladas (label + valor) ---- */
+  .tb-stack {
+    display: block;
+    width: 100%;
+  }
+
+  .tb-stack thead {
+    display: none; /* las cabeceras se muestran como label en cada celda */
+  }
+
+  .tb-stack tbody,
+  .tb-stack tr,
+  .tb-stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .tb-stack tr {
+    border: 0.5px solid #ececec;
+    border-radius: 10px;
+    background: #fff;
+    margin: 0 0 8px;
+    padding: 3px 0;
+    overflow: hidden;
+  }
+
+  .tb-stack td {
+    display: flex;
+    flex-wrap: wrap; /* el valor baja de línea y hace wrap si no cabe */
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
+    min-width: 0;
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: anywhere; /* rompe comprobantes/tokens largos sin espacios */
+    overflow: visible;
+    text-overflow: clip;
+    border: none;
+    border-bottom: 0.5px solid #f4f4f4;
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .tb-stack tr td:last-child {
+    border-bottom: none;
+  }
+
+  /* Etiqueta de cada celda a partir del data-label */
+  .tb-stack td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    margin-right: auto;
+    text-align: left;
+    font-size: 9px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #b3b3b3;
+  }
+
+  /* Alineación dentro de la card siempre a la derecha */
+  .tb-stack td.a-l,
+  .tb-stack td.a-c {
+    text-align: right;
+  }
+
+  /* Reset del hover de fila (en card se ve raro) */
+  .tb-stack tr:hover td {
+    background: transparent;
+  }
+
+  /* Fila total como card destacada */
+  .tb-stack tr.total-row {
+    background: #fafafa;
+    border-color: #e3e3e3;
+  }
+
+  .tb-stack tr.total-row td {
+    background: transparent;
+  }
+
+  /* Fila vacía: centrada, sin label */
+  .tb-stack tr.empty-row td {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .tb-stack tr.empty-row td::before {
+    content: "";
+    margin: 0;
+  }
+
+  /* Factory — tabla mensual: cada semana es una card colapsable.
+     La fila de drilldown queda como lista vertical debajo. */
+  .tb-stack-month .week-row {
+    border-color: #d8e7ef;
+    background: #fff;
+  }
+
+  .tb-stack-month .week-open {
+    background: #eef6fa;
+  }
+
+  .tb-stack-month .week-open td {
+    background: transparent;
+  }
+
+  /* Drilldown anidado: el contenedor NO es una celda-card (mantiene la
+     sub-tabla a ancho completo); su tabla interna sí se apila. */
+  .tb-stack-month .drill-row > td {
+    display: block;
+    padding: 0 !important;
+    border: none;
+  }
+
+  .tb-stack-month .drill-row > td::before {
+    content: none;
+  }
+
+  .tb-stack.drill {
+    margin: 0;
+  }
+
+  .tb-stack.drill tr {
+    border: none;
+    border-bottom: 0.5px solid #e6ecf0;
+    border-radius: 0;
+    margin: 0;
+    background: #f7f9fb;
+  }
+
+  .tb-stack.drill tr:last-child {
+    border-bottom: none;
+  }
+}

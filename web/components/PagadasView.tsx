@@ -6,7 +6,7 @@ export default function PagadasView({ dash }: { dash: Dashboard }) {
     <div className="view">
       <div className="section-label">Histórico — cobros confirmados</div>
 
-      <div className="metric-row" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
+      <div className="metric-row metric-row-3">
         <div className="metric">
           <span className="m-lbl">Total cobrado</span>
           <div className="m-num" style={{ color: "#1a7a44" }}>
@@ -38,7 +38,7 @@ export default function PagadasView({ dash }: { dash: Dashboard }) {
           <span className="card-title">Instalaciones pagadas — INS</span>
           <span className="card-badge p-grn">{dash.pagadas.length}</span>
         </div>
-        <table className="tb-full">
+        <table className="tb-full tb-stack">
           <thead>
             <tr>
               <th style={{ width: "22%" }}>Comprobante</th>
@@ -54,9 +54,9 @@ export default function PagadasView({ dash }: { dash: Dashboard }) {
             )}
             {dash.pagadas.map((r) => (
               <tr key={r.comprobante}>
-                <td>{r.comprobante}</td>
-                <td className="client-cell">{r.cliente}</td>
-                <td className="a-l">{money(r.montoTotal)}</td>
+                <td data-label="Comprobante">{r.comprobante}</td>
+                <td className="client-cell" data-label="Cliente">{r.cliente}</td>
+                <td className="a-l" data-label="Monto pagado">{money(r.montoTotal)}</td>
               </tr>
             ))}
             {dash.pagadas.length > 0 && (

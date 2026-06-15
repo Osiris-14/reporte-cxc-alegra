@@ -40,6 +40,24 @@ export default function Topbar({
         </div>
         <div className="avatar">RD</div>
       </div>
+
+      {/* Bottom bar — solo visible en móvil (la nav superior se oculta) */}
+      <nav className="bottombar" aria-label="Navegación principal">
+        <Link
+          href="/cxc"
+          className={`bb-link ${active === "cxc" ? "bb-link-active" : ""}`}
+        >
+          <i className="ti ti-wallet" aria-hidden="true" />
+          <span>CXC Monitor</span>
+        </Link>
+        <Link
+          href="/factory"
+          className={`bb-link ${active === "factory" ? "bb-link-active" : ""}`}
+        >
+          <i className="ti ti-building-factory-2" aria-hidden="true" />
+          <span>Factory</span>
+        </Link>
+      </nav>
     </div>
   );
 }

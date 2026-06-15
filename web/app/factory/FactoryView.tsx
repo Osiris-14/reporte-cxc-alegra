@@ -26,7 +26,7 @@ function AperturasTable({
         <span className="card-title">{title}</span>
         <span className="card-badge p-grn">{rows.length}</span>
       </div>
-      <table className="tb-full">
+      <table className="tb-full tb-stack">
         <thead>
           <tr>
             <th style={{ width: "26%" }}>NCF</th>
@@ -43,10 +43,10 @@ function AperturasTable({
           )}
           {rows.map((r) => (
             <tr key={r.comprobante}>
-              <td>{r.comprobante}</td>
-              <td className="client-cell">{r.cliente}</td>
-              <td className="a-l">{money(r.montoPendiente)}</td>
-              <td className="muted a-c">{diaMes(r.fecha)}</td>
+              <td data-label="NCF">{r.comprobante}</td>
+              <td className="client-cell" data-label="Cliente">{r.cliente}</td>
+              <td className="a-l" data-label="Monto pend.">{money(r.montoPendiente)}</td>
+              <td className="muted a-c" data-label="Creación">{diaMes(r.fecha)}</td>
             </tr>
           ))}
           {rows.length > 0 && (
@@ -101,7 +101,7 @@ function DrilldownRow({ w }: { w: WeekRow }) {
   return (
     <tr className="drill-row">
       <td colSpan={7} style={{ padding: 0 }}>
-        <table className="tb-full drill">
+        <table className="tb-full drill tb-stack">
           <thead>
             <tr>
               <th style={{ width: "16%" }}>NCF</th>
@@ -116,17 +116,17 @@ function DrilldownRow({ w }: { w: WeekRow }) {
           <tbody>
             {w.facturas.map((f) => (
               <tr key={f.comprobante}>
-                <td>{f.comprobante}</td>
-                <td className="client-cell">{f.cliente}</td>
-                <td className="a-l">{money(f.montoApertura)}</td>
-                <td className="a-l">{money(f.heRecibido)}</td>
-                <td className="a-l">{money(f.pendiente)}</td>
-                <td className="a-c">
+                <td data-label="NCF">{f.comprobante}</td>
+                <td className="client-cell" data-label="Cliente">{f.cliente}</td>
+                <td className="a-l" data-label="Monto esperado">{money(f.montoApertura)}</td>
+                <td className="a-l" data-label="He recibido">{money(f.heRecibido)}</td>
+                <td className="a-l" data-label="Pendiente">{money(f.pendiente)}</td>
+                <td className="a-c" data-label="¿Pagó?">
                   <span className={`fb ${f.pago ? "fb-g" : "fb-r"}`}>
                     {f.pago ? "Sí" : "No"}
                   </span>
                 </td>
-                <td className="muted a-c">{diaMesAnio(f.vence)}</td>
+                <td className="muted a-c" data-label="Se vence en">{diaMesAnio(f.vence)}</td>
               </tr>
             ))}
           </tbody>
@@ -142,7 +142,7 @@ function MonthlyTable({ mesData }: { mesData: MesData }) {
 
   return (
     <div className="card">
-      <table className="tb-full">
+      <table className="tb-full tb-stack tb-stack-month">
         <thead>
           <tr>
             <th style={{ width: "18%" }}>Semana</th>
@@ -158,7 +158,7 @@ function MonthlyTable({ mesData }: { mesData: MesData }) {
           {mesData.semanas.map((w) =>
             w.vacia ? (
               <tr key={w.label}>
-                <td>
+                <td data-label="Semana">
                   <b>{w.label}</b> <span className="muted">{w.rango}</span>
                 </td>
                 <td className="muted a-c" colSpan={6}>
@@ -174,7 +174,7 @@ function MonthlyTable({ mesData }: { mesData: MesData }) {
                     setAbierta((a) => (a === w.label ? null : w.label))
                   }
                 >
-                  <td>
+                  <td data-label="Semana">
                     <i
                       className={`ti ti-chevron-${abierta === w.label ? "down" : "right"}`}
                       style={{ fontSize: 12, marginRight: 4, verticalAlign: "middle" }}
@@ -182,20 +182,20 @@ function MonthlyTable({ mesData }: { mesData: MesData }) {
                     />
                     <b>{w.label}</b> <span className="muted">{w.rango}</span>
                   </td>
-                  <td className="a-c">{w.entraron}</td>
-                  <td className="a-c">
+                  <td className="a-c" data-label="Entraron">{w.entraron}</td>
+                  <td className="a-c" data-label="Han pagado">
                     <span className={`fb ${badgeClass(w.hanPagadoBadge)}`}>
                       {w.hanPagado}/{w.entraron} · {w.hanPagadoPct}%
                     </span>
                   </td>
-                  <td className="a-l">{money(w.entregue)}</td>
-                  <td className="a-l">{money(w.recibido)}</td>
-                  <td className="a-l">
+                  <td className="a-l" data-label="Entregué">{money(w.entregue)}</td>
+                  <td className="a-l" data-label="He recibido">{money(w.recibido)}</td>
+                  <td className="a-l" data-label="Pendiente">
                     <span className={`fb ${badgeClass(w.pendienteBadge)}`}>
                       {money(w.pendiente)}
                     </span>
                   </td>
-                  <td className="a-c">
+                  <td className="a-c" data-label="Se vencen en">
                     <span className={`fb ${badgeClass(w.vencenBadge)}`}>
                       {w.vencenRango}
                     </span>
@@ -206,16 +206,16 @@ function MonthlyTable({ mesData }: { mesData: MesData }) {
             ),
           )}
           <tr className="total-row">
-            <td>Total del mes</td>
-            <td className="a-c">{t.entraron}</td>
-            <td className="a-c">
+            <td data-label="Semana">Total del mes</td>
+            <td className="a-c" data-label="Entraron">{t.entraron}</td>
+            <td className="a-c" data-label="Han pagado">
               <span className={`fb ${badgeClass(t.hanPagadoBadge)}`}>
                 {t.hanPagado}/{t.entraron} · {t.hanPagadoPct}%
               </span>
             </td>
-            <td className="a-l">{money(t.entregue)}</td>
-            <td className="a-l">{money(t.recibido)}</td>
-            <td className="a-l">
+            <td className="a-l" data-label="Entregué">{money(t.entregue)}</td>
+            <td className="a-l" data-label="He recibido">{money(t.recibido)}</td>
+            <td className="a-l" data-label="Pendiente">
               <span className={`fb ${badgeClass(t.pendienteBadge)}`}>
                 {money(t.pendiente)}
               </span>
@@ -283,7 +283,7 @@ export default function FactoryView({
         </div>
 
         {/* Sección 2 — dos tablas */}
-        <div className="two-col" style={{ gridTemplateColumns: "1fr 1fr" }}>
+        <div className="two-col two-col-even">
           <AperturasTable title="Aperturas de hoy" color="#3aa76d" rows={data.tablaHoy} />
           <AperturasTable
             title="Aperturas esta semana"

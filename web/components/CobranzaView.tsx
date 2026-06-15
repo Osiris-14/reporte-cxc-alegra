@@ -35,7 +35,7 @@ export default function CobranzaView({ dash }: { dash: Dashboard }) {
           <span className="card-title">Instalaciones de hoy — I01</span>
           <span className="card-badge p-grn">{dash.instHoy.length}</span>
         </div>
-        <table className="tb-full">
+        <table className="tb-full tb-stack">
           <thead>
             <tr>
               <th style={{ width: "22%" }}>Comprobante</th>
@@ -47,9 +47,9 @@ export default function CobranzaView({ dash }: { dash: Dashboard }) {
             {dash.instHoy.length === 0 && <Empty cols={3} />}
             {dash.instHoy.map((r) => (
               <tr key={r.comprobante}>
-                <td>{r.comprobante}</td>
-                <td className="client-cell">{r.cliente}</td>
-                <td className="a-l">{money(r.montoPendiente)}</td>
+                <td data-label="Comprobante">{r.comprobante}</td>
+                <td className="client-cell" data-label="Cliente">{r.cliente}</td>
+                <td className="a-l" data-label="Monto a cobrar">{money(r.montoPendiente)}</td>
               </tr>
             ))}
             {dash.instHoy.length > 0 && <Total value={money(totalHoy)} span={2} />}
@@ -64,7 +64,7 @@ export default function CobranzaView({ dash }: { dash: Dashboard }) {
           <span className="card-title">Instalaciones de la semana — IS2</span>
           <span className="card-badge p-amb">{dash.instSemana.length}</span>
         </div>
-        <table className="tb-full">
+        <table className="tb-full tb-stack">
           <thead>
             <tr>
               <th style={{ width: "22%" }}>Comprobante</th>
@@ -77,10 +77,10 @@ export default function CobranzaView({ dash }: { dash: Dashboard }) {
             {dash.instSemana.length === 0 && <Empty cols={4} />}
             {dash.instSemana.map((r) => (
               <tr key={r.comprobante}>
-                <td>{r.comprobante}</td>
-                <td className="client-cell">{r.cliente}</td>
-                <td className="a-l">{money(r.montoPendiente)}</td>
-                <td style={{ textAlign: "center" }}>
+                <td data-label="Comprobante">{r.comprobante}</td>
+                <td className="client-cell" data-label="Cliente">{r.cliente}</td>
+                <td className="a-l" data-label="Monto pendiente">{money(r.montoPendiente)}</td>
+                <td style={{ textAlign: "center" }} data-label="Día">
                   {r.fechaVencimiento ? r.fechaVencimiento.getUTCDate() : "—"}
                 </td>
               </tr>
@@ -101,7 +101,7 @@ export default function CobranzaView({ dash }: { dash: Dashboard }) {
             {dash.reagendadas.length}
           </span>
         </div>
-        <table className="tb-full">
+        <table className="tb-full tb-stack">
           <thead>
             <tr>
               <th style={{ width: "18%" }}>NCF</th>
@@ -115,11 +115,11 @@ export default function CobranzaView({ dash }: { dash: Dashboard }) {
             {dash.reagendadas.length === 0 && <Empty cols={5} />}
             {dash.reagendadas.map((r: TableRow) => (
               <tr key={r.comprobante}>
-                <td>{r.comprobante}</td>
-                <td className="client-cell">{r.cliente}</td>
-                <td className="a-l">{money(r.montoPendiente)}</td>
-                <td className="muted a-c">{diaMes(r.fechaVencimiento)}</td>
-                <td className="a-c">
+                <td data-label="NCF">{r.comprobante}</td>
+                <td className="client-cell" data-label="Cliente">{r.cliente}</td>
+                <td className="a-l" data-label="Monto pend.">{money(r.montoPendiente)}</td>
+                <td className="muted a-c" data-label="Fecha 0">{diaMes(r.fechaVencimiento)}</td>
+                <td className="a-c" data-label="Reagendamiento">
                   <span className={`pill ${r.reagClass}`}>
                     {diaMes(r.fechaReagendamiento)}
                   </span>
