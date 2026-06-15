@@ -41,3 +41,6 @@ jobs:
           git commit -m "Actualización automática" || echo "No changes"
           git pull --rebase origin main
           git push origin main
+
+      - name: Trigger Vercel redeploy
+        run: curl -X POST ${{ secrets.VERCEL_DEPLOY_HOOK }}

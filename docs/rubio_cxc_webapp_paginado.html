@@ -1,0 +1,930 @@
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: var(--font-sans)
+    }
+
+    .app {
+        background: #f2f3f5;
+        min-height: 760px
+    }
+
+    .topbar {
+        background: #fff;
+        border-bottom: 0.5px solid #e3e3e3;
+        padding: 0 20px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between
+    }
+
+    .tb-left {
+        display: flex;
+        align-items: center;
+        gap: 10px
+    }
+
+    .logo-dot {
+        width: 28px;
+        height: 28px;
+        background: #e05252;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center
+    }
+
+    .logo-dot i {
+        color: #fff;
+        font-size: 15px
+    }
+
+    .app-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #111
+    }
+
+    .app-sub {
+        font-size: 11px;
+        color: #aaa
+    }
+
+    .tb-right {
+        display: flex;
+        align-items: center;
+        gap: 12px
+    }
+
+    .tb-pill {
+        background: #f5f5f5;
+        border-radius: 99px;
+        padding: 4px 11px;
+        font-size: 11px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 5px
+    }
+
+    .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #e05252;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 500;
+        color: #fff
+    }
+
+    .tabbar {
+        background: #fff;
+        border-bottom: 0.5px solid #e3e3e3;
+        padding: 0 20px;
+        display: flex;
+        gap: 4px
+    }
+
+    .tab {
+        padding: 11px 16px;
+        font-size: 12px;
+        color: #999;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500
+    }
+
+    .tab:hover {
+        color: #555
+    }
+
+    .tab-active {
+        color: #e05252;
+        border-bottom-color: #e05252
+    }
+
+    .tab i {
+        font-size: 15px
+    }
+
+    .view {
+        padding: 18px 20px;
+        flex-direction: column;
+        gap: 14px
+    }
+
+    .section-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: #aaa;
+        font-weight: 500;
+        margin-bottom: -4px;
+        display: flex;
+        align-items: center;
+        gap: 6px
+    }
+
+    .metric-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px
+    }
+
+    .metric {
+        background: #fff;
+        border-radius: 12px;
+        border: 0.5px solid #e8e8e8;
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px
+    }
+
+    .m-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between
+    }
+
+    .m-ico {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px
+    }
+
+    .m-lbl {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #aaa
+    }
+
+    .m-num {
+        font-size: 25px;
+        font-weight: 600;
+        color: #111;
+        line-height: 1.1;
+        letter-spacing: -0.5px
+    }
+
+    .m-delta {
+        font-size: 10px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 3px
+    }
+
+    .status-row {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px
+    }
+
+    .spill {
+        border-radius: 10px;
+        padding: 11px 12px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 2px
+    }
+
+    .spill:hover {
+        filter: brightness(0.96)
+    }
+
+    .sp-tag {
+        font-size: 9px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: .9
+    }
+
+    .sp-num {
+        font-size: 22px;
+        font-weight: 600;
+        line-height: 1
+    }
+
+    .sp-amt {
+        font-size: 10px;
+        opacity: .85;
+        margin-top: 2px
+    }
+
+    .c-red2 {
+        background: #e05252;
+        color: #fff
+    }
+
+    .c-grn2 {
+        background: #3aa76d;
+        color: #fff
+    }
+
+    .c-ylw2 {
+        background: #e6a817;
+        color: #fff
+    }
+
+    .c-pur2 {
+        background: #7b68cc;
+        color: #fff
+    }
+
+    .c-drk2 {
+        background: #2b2b2b;
+        color: #fff
+    }
+
+    .c-blu2 {
+        background: #5bb8d4;
+        color: #fff
+    }
+
+    .two-col {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 12px
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 12px;
+        border: 0.5px solid #e8e8e8;
+        overflow: hidden
+    }
+
+    .card-head {
+        padding: 11px 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 0.5px solid #f0f0f0
+    }
+
+    .cdot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%
+    }
+
+    .card-title {
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #777
+    }
+
+    .card-badge {
+        margin-left: auto;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 9px;
+        border-radius: 99px
+    }
+
+    .aging {
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 13px
+    }
+
+    .age-row {
+        display: flex;
+        flex-direction: column;
+        gap: 5px
+    }
+
+    .age-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px
+    }
+
+    .age-meta .lbl {
+        color: #666;
+        font-weight: 500
+    }
+
+    .age-meta .val {
+        color: #999;
+        font-variant-numeric: tabular-nums
+    }
+
+    .age-track {
+        background: #f2f2f2;
+        border-radius: 99px;
+        height: 9px
+    }
+
+    .age-fill {
+        height: 9px;
+        border-radius: 99px
+    }
+
+    .tb-full {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11.5px;
+        table-layout: fixed
+    }
+
+    .tb-full th {
+        padding: 8px 13px;
+        text-align: left;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #bbb;
+        background: #fafafa;
+        border-bottom: 0.5px solid #eee
+    }
+
+    .tb-full td {
+        padding: 8px 13px;
+        color: #333;
+        border-bottom: 0.5px solid #f5f5f5;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap
+    }
+
+    .tb-full tr:last-child td {
+        border-bottom: none
+    }
+
+    .tb-full tr:hover td {
+        background: #fafafa
+    }
+
+    .right-amt {
+        text-align: right;
+        font-variant-numeric: tabular-nums
+    }
+
+    .client-cell {
+        font-weight: 500;
+        color: #222
+    }
+
+    .muted {
+        color: #aaa;
+        font-size: 10.5px
+    }
+
+    .pill {
+        display: inline-block;
+        font-size: 9px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        font-weight: 500;
+        white-space: nowrap
+    }
+
+    .p-red {
+        background: #fdecec;
+        color: #c0392b
+    }
+
+    .p-amb {
+        background: #fff6e0;
+        color: #b7770a
+    }
+
+    .p-grn {
+        background: #eafaf0;
+        color: #1a7a44
+    }
+
+    .total-row td {
+        font-weight: 600;
+        color: #111;
+        background: #fafafa;
+        border-top: 0.5px solid #eee
+    }
+
+    .donut-card {
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px
+    }
+
+    .leg {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%
+    }
+
+    .leg-i {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 11px;
+        color: #666
+    }
+
+    .leg-i .v {
+        margin-left: auto;
+        color: #aaa;
+        font-weight: 500
+    }
+
+    .leg-d {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%
+    }
+
+    .alert-box {
+        background: #fdf0f0;
+        border: 0.5px solid #f5d0d0;
+        border-radius: 10px;
+        padding: 11px 14px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px
+    }
+
+    .alert-box i {
+        color: #c0392b;
+        font-size: 16px;
+        margin-top: 1px
+    }
+
+    .alert-txt {
+        font-size: 11.5px;
+        color: #7a2a22;
+        line-height: 1.5
+    }
+
+    .alert-txt b {
+        font-weight: 600
+    }
+</style>
+
+<div class="app">
+    <div class="topbar">
+        <div class="tb-left">
+            <div class="logo-dot"><i class="ti ti-shield-check" aria-hidden="true"></i></div>
+            <span class="app-name">Rubio Defensas</span>
+            <span class="app-sub">· CXC Monitor</span>
+        </div>
+        <div class="tb-right">
+            <div class="tb-pill"><i class="ti ti-database" style="font-size:12px" aria-hidden="true"></i> Alegra</div>
+            <div class="tb-pill"><i class="ti ti-refresh" style="font-size:12px" aria-hidden="true"></i> hace 5 min
+            </div>
+            <div class="avatar">RD</div>
+        </div>
+    </div>
+
+    <div class="tabbar">
+        <div class="tab tab-active" onclick="showTab(0)"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>
+            Resumen</div>
+        <div class="tab" onclick="showTab(1)"><i class="ti ti-cash" aria-hidden="true"></i> Cobranza activa</div>
+        <div class="tab" onclick="showTab(2)"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Mora</div>
+        <div class="tab" onclick="showTab(3)"><i class="ti ti-circle-check" aria-hidden="true"></i> Pagadas</div>
+    </div>
+
+    <div class="view" id="v0" style="display:flex">
+        <div class="section-label">Indicadores de cartera</div>
+        <div class="metric-row">
+            <div class="metric">
+                <div class="m-top"><span class="m-lbl">Cartera total</span>
+                    <div class="m-ico" style="background:#fdecec;color:#c0392b"><i class="ti ti-wallet"
+                            aria-hidden="true"></i></div>
+                </div>
+                <div class="m-num">$329,543</div>
+                <div class="m-delta" style="color:#999">por cobrar · 19 comprobantes</div>
+            </div>
+            <div class="metric">
+                <div class="m-top"><span class="m-lbl">Cobrado</span>
+                    <div class="m-ico" style="background:#eafaf0;color:#1a7a44"><i class="ti ti-trending-up"
+                            aria-hidden="true"></i></div>
+                </div>
+                <div class="m-num" style="color:#1a7a44">$26,660</div>
+                <div class="m-delta" style="color:#999">2 instalaciones pagadas</div>
+            </div>
+            <div class="metric">
+                <div class="m-top"><span class="m-lbl">Días prom. atraso</span>
+                    <div class="m-ico" style="background:#fff6e0;color:#b7770a"><i class="ti ti-clock"
+                            aria-hidden="true"></i></div>
+                </div>
+                <div class="m-num" style="color:#b7770a">44</div>
+                <div class="m-delta" style="color:#999">días promedio en mora</div>
+            </div>
+            <div class="metric">
+                <div class="m-top"><span class="m-lbl">Concentración top deudor</span>
+                    <div class="m-ico" style="background:#f0eeff;color:#534AB7"><i class="ti ti-user-exclamation"
+                            aria-hidden="true"></i></div>
+                </div>
+                <div class="m-num" style="color:#534AB7">40%</div>
+                <div class="m-delta" style="color:#999">Transporte BM Cargo</div>
+            </div>
+        </div>
+
+        <div class="section-label">Estados (clic para ver detalle)</div>
+        <div class="status-row">
+            <div class="spill c-red2" onclick="showTab(2)"><span class="sp-tag">Vencidas</span><span
+                    class="sp-num">8</span><span class="sp-amt">$170,328</span></div>
+            <div class="spill c-grn2" onclick="showTab(1)"><span class="sp-tag">Inst. hoy</span><span
+                    class="sp-num">3</span><span class="sp-amt">$48,946</span></div>
+            <div class="spill c-ylw2" onclick="showTab(1)"><span class="sp-tag">Inst. semana</span><span
+                    class="sp-num">2</span><span class="sp-amt">$12,455</span></div>
+            <div class="spill c-pur2" onclick="showTab(1)"><span class="sp-tag">Reagendadas</span><span
+                    class="sp-num">6</span><span class="sp-amt">$64,952</span></div>
+            <div class="spill c-drk2" onclick="showTab(2)"><span class="sp-tag">Atrasadas</span><span
+                    class="sp-num">3</span><span class="sp-amt">$32,862</span></div>
+            <div class="spill c-blu2" onclick="showTab(3)"><span class="sp-tag">Pagadas</span><span
+                    class="sp-num">2</span><span class="sp-amt">$26,660</span></div>
+        </div>
+
+        <div class="two-col">
+            <div class="card">
+                <div class="card-head">
+                    <div class="cdot" style="background:#e05252"></div><span class="card-title">Antigüedad de la deuda
+                        (aging)</span>
+                </div>
+                <div class="aging">
+                    <div class="age-row">
+                        <div class="age-meta"><span class="lbl">+90 días</span><span class="val">$130,494 · 64%</span>
+                        </div>
+                        <div class="age-track">
+                            <div class="age-fill" style="width:100%;background:#e05252"></div>
+                        </div>
+                    </div>
+                    <div class="age-row">
+                        <div class="age-meta"><span class="lbl">61 – 90 días</span><span class="val">$5,989 · 3%</span>
+                        </div>
+                        <div class="age-track">
+                            <div class="age-fill" style="width:8%;background:#e6a817"></div>
+                        </div>
+                    </div>
+                    <div class="age-row">
+                        <div class="age-meta"><span class="lbl">31 – 60 días</span><span class="val">$11,660 · 6%</span>
+                        </div>
+                        <div class="age-track">
+                            <div class="age-fill" style="width:14%;background:#e6a817"></div>
+                        </div>
+                    </div>
+                    <div class="age-row">
+                        <div class="age-meta"><span class="lbl">0 – 30 días</span><span class="val">$55,047 · 27%</span>
+                        </div>
+                        <div class="age-track">
+                            <div class="age-fill" style="width:42%;background:#3aa76d"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card donut-card">
+                <div class="card-title" style="align-self:flex-start">Peso por estado</div>
+                <svg width="96" height="96" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="#f0f0f0" stroke-width="14" />
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="#e05252" stroke-width="14"
+                        stroke-dasharray="113 113" stroke-dashoffset="0" transform="rotate(-90 50 50)" />
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="#7b68cc" stroke-width="14"
+                        stroke-dasharray="70.7 155.3" stroke-dashoffset="-113" transform="rotate(-90 50 50)" />
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="#e6a817" stroke-width="14"
+                        stroke-dasharray="42.4 183.6" stroke-dashoffset="-183.7" transform="rotate(-90 50 50)" />
+                    <text x="50" y="46" text-anchor="middle" font-size="13" font-weight="600" fill="#111">16</text>
+                    <text x="50" y="58" text-anchor="middle" font-size="9" fill="#aaa">casos</text>
+                </svg>
+                <div class="leg">
+                    <div class="leg-i">
+                        <div class="leg-d" style="background:#e05252"></div>Atraso<span class="v">50%</span>
+                    </div>
+                    <div class="leg-i">
+                        <div class="leg-d" style="background:#7b68cc"></div>Reagendado<span class="v">31%</span>
+                    </div>
+                    <div class="leg-i">
+                        <div class="leg-d" style="background:#e6a817"></div>Sin reagendar<span class="v">19%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert-box">
+            <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+            <div class="alert-txt"><b>Riesgo de concentración:</b> el 64% de la cartera vencida ($130,494) está en un
+                solo cliente — Transporte BM Cargo SRL — con más de 90 días de atraso desde el 4 de febrero. Priorizar
+                gestión de cobro.</div>
+        </div>
+    </div>
+
+    <div class="view" id="v1" style="display:none">
+        <div class="section-label">Lo que entra — instalaciones por cobrar</div>
+        <div class="card">
+            <div class="card-head">
+                <div class="cdot" style="background:#3aa76d"></div><span class="card-title">Instalaciones de hoy —
+                    I01</span><span class="card-badge p-grn">3</span>
+            </div>
+            <table class="tb-full">
+                <thead>
+                    <tr>
+                        <th style="width:22%">Comprobante</th>
+                        <th style="width:48%">Cliente</th>
+                        <th style="width:30%;text-align:right">Monto a cobrar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>B0200003349</td>
+                        <td class="client-cell">+1 (829) 650-1199</td>
+                        <td class="right-amt">$27,507</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003341</td>
+                        <td class="client-cell">(809) 464-0722</td>
+                        <td class="right-amt">$5,857</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003365</td>
+                        <td class="client-cell">(809) 994-3004</td>
+                        <td class="right-amt">$15,582</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="2">Total</td>
+                        <td class="right-amt">$48,946</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <div class="card-head">
+                <div class="cdot" style="background:#e6a817"></div><span class="card-title">Instalaciones de la semana —
+                    IS2</span><span class="card-badge p-amb">2</span>
+            </div>
+            <table class="tb-full">
+                <thead>
+                    <tr>
+                        <th style="width:22%">Comprobante</th>
+                        <th style="width:43%">Cliente</th>
+                        <th style="width:23%;text-align:right">Monto pendiente</th>
+                        <th style="width:12%;text-align:center">Día</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>B0200003344</td>
+                        <td class="client-cell">(829) 616-0370</td>
+                        <td class="right-amt">$9,805</td>
+                        <td style="text-align:center">12</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003372</td>
+                        <td class="client-cell">Mariano</td>
+                        <td class="right-amt">$2,650</td>
+                        <td style="text-align:center">12</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="2">Total</td>
+                        <td class="right-amt">$12,455</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <div class="card-head">
+                <div class="cdot" style="background:#7b68cc"></div><span class="card-title">Reagendadas — R1</span><span
+                    class="card-badge" style="background:#f0eeff;color:#534AB7">6</span>
+            </div>
+            <table class="tb-full">
+                <thead>
+                    <tr>
+                        <th style="width:18%">NCF</th>
+                        <th style="width:27%">Cliente</th>
+                        <th style="width:20%;text-align:right">Monto pend.</th>
+                        <th style="width:20%">Reagendado</th>
+                        <th style="width:15%">Fecha 0</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>B0200003365</td>
+                        <td class="client-cell">(809) 994-3004</td>
+                        <td class="right-amt">$15,582</td>
+                        <td><span class="pill p-red">11 jun</span></td>
+                        <td class="muted">11 jun</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003291</td>
+                        <td class="client-cell">Alexander Jiménez</td>
+                        <td class="right-amt">$3,260</td>
+                        <td><span class="pill p-red">13 jun</span></td>
+                        <td class="muted">28 may</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003286</td>
+                        <td class="client-cell">+1 (829) 292-1518</td>
+                        <td class="right-amt">$17,517</td>
+                        <td><span class="pill p-amb">15 jun</span></td>
+                        <td class="muted">29 may</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003315</td>
+                        <td class="client-cell">(809) 756-4215</td>
+                        <td class="right-amt">$5,698</td>
+                        <td><span class="pill p-amb">16 jun</span></td>
+                        <td class="muted">4 jun</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003236</td>
+                        <td class="client-cell">+1 (829) 642-5143</td>
+                        <td class="right-amt">$11,448</td>
+                        <td><span class="pill p-amb">19 jun</span></td>
+                        <td class="muted">18 may</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="2">Total</td>
+                        <td class="right-amt">$53,505</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="view" id="v2" style="display:none">
+        <div class="section-label">Lo problemático — cuentas en mora</div>
+        <div class="card">
+            <div class="card-head">
+                <div class="cdot" style="background:#e05252"></div><span class="card-title">Vencidas — V06</span><span
+                    class="card-badge p-red">8</span>
+            </div>
+            <table class="tb-full">
+                <thead>
+                    <tr>
+                        <th style="width:17%">Comprobante</th>
+                        <th style="width:25%">Cliente</th>
+                        <th style="width:20%">Fecha 0</th>
+                        <th style="width:20%">Reagendamiento</th>
+                        <th style="width:18%;text-align:right">Monto atraso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>B0200002863</td>
+                        <td class="client-cell">Transporte BM Cargo SRL</td>
+                        <td class="muted">4 feb 2026</td>
+                        <td class="muted">30 ene 2026</td>
+                        <td class="right-amt" style="color:#c0392b;font-weight:600">$130,494</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003006</td>
+                        <td class="client-cell">Francisco Concepción</td>
+                        <td class="muted">13 mar 2026</td>
+                        <td class="muted">13 mar 2026</td>
+                        <td class="right-amt">$5,989</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003168</td>
+                        <td class="client-cell">Cesar Martínez</td>
+                        <td class="muted">30 abr 2026</td>
+                        <td class="muted">30 abr 2026</td>
+                        <td class="right-amt">$2,120</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003167</td>
+                        <td class="client-cell">Feliz Giménez</td>
+                        <td class="muted">4 may 2026</td>
+                        <td class="muted">2 may 2026</td>
+                        <td class="right-amt">$9,540</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003271</td>
+                        <td class="client-cell">Divanny Cabrera</td>
+                        <td class="muted">27 may 2026</td>
+                        <td class="muted">6 jun 2026</td>
+                        <td class="right-amt">$5,300</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="4">Total vencido</td>
+                        <td class="right-amt">$170,328</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <div class="card-head">
+                <div class="cdot" style="background:#2b2b2b"></div><span class="card-title">Atrasadas — A01</span><span
+                    class="card-badge" style="background:#eee;color:#333">3</span>
+            </div>
+            <table class="tb-full">
+                <thead>
+                    <tr>
+                        <th style="width:18%">NCF</th>
+                        <th style="width:40%">Cliente</th>
+                        <th style="width:22%;text-align:right">Monto pend.</th>
+                        <th style="width:20%">Fecha 0</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>B0200003213</td>
+                        <td class="client-cell">Victor Antonio Hierro Ferreiras</td>
+                        <td class="right-amt">$16,112</td>
+                        <td class="muted">13 may 2026</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003321</td>
+                        <td class="client-cell">Leandro González</td>
+                        <td class="right-amt">$4,134</td>
+                        <td class="muted">4 jun 2026</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003319</td>
+                        <td class="client-cell">Jonathan</td>
+                        <td class="right-amt">$12,616</td>
+                        <td class="muted">5 jun 2026</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="2">Total atrasado</td>
+                        <td class="right-amt">$32,862</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="view" id="v3" style="display:none">
+        <div class="section-label">Histórico — cobros confirmados</div>
+        <div class="metric-row" style="grid-template-columns:repeat(3,1fr)">
+            <div class="metric"><span class="m-lbl">Total cobrado</span>
+                <div class="m-num" style="color:#1a7a44">$26,660</div>
+                <div class="m-delta" style="color:#999">2 instalaciones</div>
+            </div>
+            <div class="metric"><span class="m-lbl">Ticket promedio</span>
+                <div class="m-num">$13,330</div>
+                <div class="m-delta" style="color:#999">por instalación</div>
+            </div>
+            <div class="metric"><span class="m-lbl">Mayor cobro</span>
+                <div class="m-num">$26,160</div>
+                <div class="m-delta" style="color:#999">Industrial Recycling</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-head">
+                <div class="cdot" style="background:#5bb8d4"></div><span class="card-title">Instalaciones pagadas —
+                    INS</span><span class="card-badge p-grn">2</span>
+            </div>
+            <table class="tb-full">
+                <thead>
+                    <tr>
+                        <th style="width:22%">Comprobante</th>
+                        <th style="width:50%">Cliente</th>
+                        <th style="width:28%;text-align:right">Monto pagado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>B0200003299</td>
+                        <td class="client-cell">Industrial Recycling Rafs SRL</td>
+                        <td class="right-amt">$26,160</td>
+                    </tr>
+                    <tr>
+                        <td>B0200003416</td>
+                        <td class="client-cell">Manuel Espinal</td>
+                        <td class="right-amt">$500</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="2">Total cobrado</td>
+                        <td class="right-amt" style="color:#1a7a44">$26,660</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(n) {
+        var views = document.querySelectorAll('.view');
+        var tabs = document.querySelectorAll('.tab');
+        views.forEach(function (v, i) { v.style.display = (i === n) ? 'flex' : 'none'; });
+        tabs.forEach(function (t, i) { t.classList.toggle('tab-active', i === n); });
+    }
+</script>
