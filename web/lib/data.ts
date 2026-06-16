@@ -3,7 +3,8 @@
  *
  * Fuente:
  *  - Desarrollo (NODE_ENV !== 'production'): lee los CSV del repo por filesystem.
- *  - Producción: lee por raw.githubusercontent.com con revalidación (cron-aligned).
+ *  - Producción: lee por raw.githubusercontent.com SIN caché (no-store) para
+ *    reflejar de inmediato los cambios del pipeline (p. ej. facturas marcadas void).
  *
  * El parseo ocurre en el servidor (Server Component / route). Al cliente solo
  * se manda lo ya calculado. Usa papaparse de verdad por los campos con comillas
@@ -16,8 +17,6 @@ import { CxcRow, idCruce, parseFecha, hoyRD } from "./cxc-logic";
 
 const REPO = "Osiris-14/reporte-cxc-alegra";
 const BRANCH = "main";
-/** Revalidación de 30 min, alineada al cron del pipeline (6:30 / 11:00 / 16:45 RD). */
-export const REVALIDATE_SECONDS = 1800;
 
 const FILES = {
   cxc: "cxc_Cuentasporcobrar.csv",
@@ -38,7 +37,9 @@ async function readCsv(key: FileKey): Promise<string> {
 
   if (useRaw) {
     const url = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${file}`;
-    const res = await fetch(url, { next: { revalidate: REVALIDATE_SECONDS } });
+    // no-store: nunca cachear el CSV en el Data Cache de Next; cada request lee
+    // la versión fresca de GitHub (evita servir facturas void ya retiradas).
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) {
       throw new Error(`No se pudo leer ${file} (${res.status}) desde ${url}`);
     }

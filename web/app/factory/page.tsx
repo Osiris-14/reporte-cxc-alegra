@@ -4,7 +4,8 @@ import { computeFactory } from "@/lib/factory";
 import FactoryView from "./FactoryView";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 1800;
+// Sin ISR: el CSV se lee fresco (no-store) en cada request.
+export const revalidate = 0;
 
 export default async function FactoryPage() {
   const hoy = hoyRD();
