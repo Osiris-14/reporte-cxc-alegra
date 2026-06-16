@@ -1,8 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Topbar from "@/components/Topbar";
-import { Badge, FactoryData, FactoryRow, MesData, WeekRow } from "@/lib/factory";
+import {
+  Badge,
+  FactoryData,
+  FactoryRow,
+  MesData,
+  WeekFactura,
+} from "@/lib/factory";
 import { money, diaMes, diaMesAnio, MESES_LARGOS } from "@/lib/format";
 
 function badgeClass(b: Badge): string {
@@ -97,7 +103,7 @@ function MetricCard({
   );
 }
 
-function DrilldownRow({ w }: { w: WeekRow }) {
+function DrilldownRow({ facturas }: { facturas: WeekFactura[] }) {
   return (
     <tr className="drill-row">
       <td colSpan={7} style={{ padding: 0 }}>
@@ -114,7 +120,7 @@ function DrilldownRow({ w }: { w: WeekRow }) {
             </tr>
           </thead>
           <tbody>
-            {w.facturas.map((f) => (
+            {facturas.map((f) => (
               <tr key={f.comprobante}>
                 <td data-label="NCF">{f.comprobante}</td>
                 <td className="client-cell" data-label="Cliente">{f.cliente}</td>
@@ -136,9 +142,26 @@ function DrilldownRow({ w }: { w: WeekRow }) {
   );
 }
 
-function MonthlyTable({ mesData }: { mesData: MesData }) {
+function matchFactura(f: WeekFactura, q: string): boolean {
+  return (
+    f.comprobante.toLowerCase().includes(q) ||
+    f.cliente.toLowerCase().includes(q)
+  );
+}
+
+function MonthlyTable({ mesData, query }: { mesData: MesData; query: string }) {
   const t = mesData.total;
   const [abierta, setAbierta] = useState<string | null>(null);
+
+  const q = query.trim().toLowerCase();
+  const searching = q.length > 0;
+  // En búsqueda: cada semana se reduce a sus facturas coincidentes y las
+  // semanas sin coincidencias se omiten.
+  const semanasVista = searching
+    ? mesData.semanas
+        .map((w) => ({ w, facturas: w.facturas.filter((f) => matchFactura(f, q)) }))
+        .filter((x) => x.facturas.length > 0)
+    : [];
 
   return (
     <div className="card">
@@ -154,6 +177,30 @@ function MonthlyTable({ mesData }: { mesData: MesData }) {
             <th className="a-c" style={{ width: "13%" }}>Se vencen en</th>
           </tr>
         </thead>
+        {searching ? (
+          <tbody>
+            {semanasVista.length === 0 ? (
+              <tr className="empty-row">
+                <td colSpan={7}>Sin resultados</td>
+              </tr>
+            ) : (
+              semanasVista.map(({ w, facturas }) => (
+                <Fragment key={w.label}>
+                  <tr className="week-row week-open">
+                    <td data-label="Semana">
+                      <b>{w.label}</b> <span className="muted">{w.rango}</span>
+                    </td>
+                    <td className="muted a-c" colSpan={6}>
+                      {facturas.length}{" "}
+                      {facturas.length === 1 ? "resultado" : "resultados"}
+                    </td>
+                  </tr>
+                  <DrilldownRow facturas={facturas} />
+                </Fragment>
+              ))
+            )}
+          </tbody>
+        ) : (
         <tbody>
           {mesData.semanas.map((w) =>
             w.vacia ? (
@@ -201,7 +248,7 @@ function MonthlyTable({ mesData }: { mesData: MesData }) {
                     </span>
                   </td>
                 </tr>
-                {abierta === w.label && <DrilldownRow w={w} />}
+                {abierta === w.label && <DrilldownRow facturas={w.facturas} />}
               </>
             ),
           )}
@@ -223,6 +270,7 @@ function MonthlyTable({ mesData }: { mesData: MesData }) {
             <td />
           </tr>
         </tbody>
+        )}
       </table>
     </div>
   );
@@ -236,6 +284,31 @@ export default function FactoryView({
   fechaCorte: Date;
 }) {
   const [mes, setMes] = useState(data.mesActual);
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+
+  // La búsqueda abarca TODO el año: al escribir, saltar al tab del mes con más
+  // coincidencias (empate -> el más reciente). Si no hay coincidencias en ningún
+  // mes, se queda en el mes actual (que mostrará "Sin resultados"). Cuando no se
+  // busca, los tabs siguen siendo manuales.
+  useEffect(() => {
+    if (!q) return;
+    let bestMes = -1;
+    let bestCount = 0;
+    data.meses.forEach((md, m) => {
+      let count = 0;
+      for (const w of md.semanas) {
+        for (const f of w.facturas) if (matchFactura(f, q)) count++;
+      }
+      // `>=` con recorrido ascendente: ante empate gana el mes más reciente.
+      if (count > 0 && count >= bestCount) {
+        bestCount = count;
+        bestMes = m;
+      }
+    });
+    if (bestMes >= 0) setMes(bestMes);
+  }, [q, data.meses]);
+
   const mesData = data.meses[mes];
 
   return (
@@ -278,7 +351,7 @@ export default function FactoryView({
             color="#534AB7"
             numColor="#534AB7"
             num={mesData.total.entraron}
-            delta={`${money(mesData.total.entregue)} pendiente`}
+            delta={`${money(mesData.total.pendiente)} pendiente`}
           />
         </div>
 
@@ -305,7 +378,25 @@ export default function FactoryView({
             </button>
           ))}
         </div>
-        <MonthlyTable mesData={mesData} />
+        <div className="fac-search">
+          <i className="ti ti-search" aria-hidden="true" />
+          <input
+            type="text"
+            placeholder="Buscar por NCF o cliente..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {query && (
+            <button
+              className="fac-clear"
+              onClick={() => setQuery("")}
+              aria-label="Limpiar búsqueda"
+            >
+              <i className="ti ti-x" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+        <MonthlyTable mesData={mesData} query={query} />
       </div>
     </div>
   );

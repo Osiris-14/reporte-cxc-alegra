@@ -150,6 +150,7 @@ export interface PagoRow {
   fechaVencimiento: Date | null;
   montoPago: number;
   balancePendiente: number;
+  estadoFactura: string;
   idCruce: number | null;
 }
 
@@ -215,6 +216,7 @@ export async function loadCxcData(): Promise<CxcData> {
     fechaVencimiento: parseFecha(r["FechaVencimiento"]),
     montoPago: toNumberComma(r["MontoPago"]), // cxc_Pagos usa coma decimal
     balancePendiente: toNumberComma(r["BalancePendiente"]),
+    estadoFactura: (r["EstadoFactura"] ?? "").trim(),
     idCruce: idCruce((r["NumeroComprobante"] ?? "").trim()),
   }));
 

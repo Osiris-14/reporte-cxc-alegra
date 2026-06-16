@@ -579,6 +579,69 @@ body {
   color: #fff;
 }
 
+/* Factory — buscador del seguimiento mensual */
+.fac-search {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.fac-search > .ti-search {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: #aaa;
+  pointer-events: none;
+}
+
+.fac-search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 34px;
+  border: 0.5px solid #e8e8e8;
+  border-radius: 99px;
+  background: #fff;
+  font-size: 12px;
+  color: #333;
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+.fac-search input::placeholder {
+  color: #aaa;
+}
+
+.fac-search input:focus {
+  border-color: #5bb8d4;
+}
+
+.fac-clear {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: #f1f1f1;
+  color: #888;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.fac-clear:hover {
+  background: #e6e6e6;
+  color: #555;
+}
+
 /* Factory — badges (verde/amarillo/rojo/gris) */
 .fb {
   display: inline-block;

@@ -8,10 +8,16 @@
  *  - Pagos posteriores = pagos con FechaPago > FechaFactura.
  *  - pendienteInicial  = MontoTotal − pagoInicial.
  *  - Apertura activa   = pendienteInicial > 300.
- *  - pagóCompleto      = SUM(todos los MontoPago) * 1.06 >= MontoTotal.
- *  - heRecibido        = SUM(MontoPago posteriores) * 1.06.
+ *  - pagóCompleto      = BalancePendiente (CSV) <= 300. Lo confirma Alegra, que
+ *                        ya descuenta notas de crédito (no depende de los pagos).
+ *  - heRecibido        = SUM(MontoPago posteriores) * 1.06 (todos, aunque no
+ *                        cubran el total).
  *  - Entregué          = SUM(pendienteInicial).
- *  - Pendiente         = Entregué − He recibido.
+ *  - Monto pend.       = BalancePendiente (campo del CSV cxc), NO MontoTotal.
+ *  - Pendiente         = SUM(BalancePendiente).
+ *
+ * Exclusión VOID: se descartan de toda la lógica las facturas con Estado=void
+ * en cxc_Cuentasporcobrar o EstadoFactura=void en cxc_Pagos.
  */
 import { CxcRow, inicioSemana } from "./cxc-logic";
 import type { PagoRow } from "./data";
@@ -115,29 +121,32 @@ function semanasDelMes(anio: number, mes: number): { start: Date; end: Date }[] 
   return weeks;
 }
 
-const badgePct = (pct: number): Badge => (pct > 70 ? "g" : pct >= 30 ? "y" : "r");
+// "Han pagado": verde solo al 100%, rojo en cualquier % menor. Sin amarillo.
+const badgePct = (pct: number): Badge => (pct >= 100 ? "g" : "r");
 
 /** Calcula apertura/pagos para una factura usando sus pagos (FechaFactura = Fecha). */
 export function calcFactura(row: CxcRow, pagos: PagoRow[]): FCalc {
   const fechaFactura = row.fecha;
   let pagoInicial = 0;
   let posterior = 0;
-  let totalPagado = 0;
   for (const p of pagos) {
-    totalPagado += p.montoPago;
     if (!p.fechaPago || !fechaFactura) continue;
     if (p.fechaPago.getTime() === fechaFactura.getTime()) pagoInicial += p.montoPago;
     else if (p.fechaPago.getTime() > fechaFactura.getTime()) posterior += p.montoPago;
   }
   const pendienteInicial = row.montoTotal - pagoInicial;
-  // Pagó completo = misma lógica de "Cerrado" en CXC pero con ITBIS:
-  // SUM(pagos)*1.06 >= MontoTotal  ó  MontoTotal − SUM(pagos)*1.06 <= 300.
-  const pagadoConItbis = totalPagado * ITBIS;
+  // ¿Pagó completo? Se decide por BalancePendiente del CSV (Alegra ya descuenta
+  // notas de crédito), NO por la suma de pagos en efectivo:
+  //  - CASO 1: BalancePendiente <= 300 -> pagó completo (la diferencia que no
+  //    cubrieron los pagos la cubrió una nota de crédito).
+  //  - CASO 2: BalancePendiente > 300  -> aún pendiente.
+  // He recibido = TODOS los pagos posteriores (FechaPago > FechaCreación) * 1.06,
+  // aunque no cubran el total, en ambos casos.
   return {
     row,
     pendienteInicial,
     heRecibido: posterior * ITBIS,
-    pagoCompleto: row.montoTotal - pagadoConItbis <= UMBRAL_APERTURA,
+    pagoCompleto: row.balancePendiente <= UMBRAL_APERTURA,
     activa: pendienteInicial > UMBRAL_APERTURA,
   };
 }
@@ -152,16 +161,29 @@ export function computeFactory(
   const semanaActualStart = lunes.getTime();
 
   // Pagos del año en curso por comprobante (los NCF se reciclan cada año).
+  // De paso se recolectan los comprobantes marcados VOID en cxc_Pagos.
   const pagosByComp = new Map<string, PagoRow[]>();
+  const voidComprobantes = new Set<string>();
   for (const p of pagos) {
     if (!p.fechaPago || p.fechaPago.getUTCFullYear() !== anio) continue;
+    if (p.estadoFactura.toLowerCase() === "void") {
+      voidComprobantes.add(p.numeroComprobante);
+    }
     const arr = pagosByComp.get(p.numeroComprobante) ?? [];
     arr.push(p);
     pagosByComp.set(p.numeroComprobante, arr);
   }
 
+  // Excluir facturas VOID de TODA la lógica de Factory: Estado=void en
+  // cxc_Cuentasporcobrar o EstadoFactura=void en cxc_Pagos (cualquiera basta).
+  const cxcVigente = cxc.filter(
+    (r) =>
+      r.estado.toLowerCase() !== "void" &&
+      !voidComprobantes.has(r.numeroComprobante),
+  );
+
   // Cálculo por factura (solo año en curso ya viene filtrado en data.cxc).
-  const calc: FCalc[] = cxc.map((r) =>
+  const calc: FCalc[] = cxcVigente.map((r) =>
     calcFactura(r, pagosByComp.get(r.numeroComprobante) ?? []),
   );
   const activas = calc.filter((c) => c.activa);
@@ -169,16 +191,16 @@ export function computeFactory(
   const sumPend = (cs: FCalc[]) => cs.reduce((a, c) => a + c.pendienteInicial, 0);
   const sumRecibido = (cs: FCalc[]) => cs.reduce((a, c) => a + c.heRecibido, 0);
   const countPagaron = (cs: FCalc[]) => cs.filter((c) => c.pagoCompleto).length;
-  // Pendiente por factura: 0 si pagó completo; nunca negativo.
-  const pendienteFactura = (c: FCalc) =>
-    c.pagoCompleto ? 0 : Math.max(0, c.pendienteInicial - c.heRecibido);
-  const sumPendiente = (cs: FCalc[]) =>
-    cs.reduce((a, c) => a + pendienteFactura(c), 0);
+  // "Monto pendiente" = campo BalancePendiente del CSV (cxc_Cuentasporcobrar),
+  // NO derivado de MontoTotal. Es el balance pendiente real de cada factura.
+  const balancePend = (c: FCalc) => c.row.balancePendiente;
+  const sumBalance = (cs: FCalc[]) =>
+    cs.reduce((a, c) => a + balancePend(c), 0);
 
   const toRow = (c: FCalc): FactoryRow => ({
     comprobante: c.row.numeroComprobante,
     cliente: c.row.cliente || "—",
-    montoPendiente: c.pendienteInicial,
+    montoPendiente: balancePend(c),
     fecha: c.row.fecha,
   });
 
@@ -187,7 +209,7 @@ export function computeFactory(
   const aperturasSemana = activas.filter((c) =>
     inRange(c.row.fecha, lunes, hoy),
   );
-  const aperturasSemanaMonto = sumPend(aperturasSemana);
+  const aperturasSemanaMonto = sumBalance(aperturasSemana);
 
   const tablaHoy = aperturasHoy
     .map(toRow)
@@ -250,7 +272,7 @@ export function computeFactory(
       }
       const entregue = sumPend(cs);
       const recibido = sumRecibido(cs);
-      const pendiente = sumPendiente(cs);
+      const pendiente = sumBalance(cs);
       const hanPagado = countPagaron(cs);
       const hanPagadoPct = Math.round((hanPagado / cs.length) * 100);
       const v = vencenSemana(cs);
@@ -273,7 +295,7 @@ export function computeFactory(
             cliente: c.row.cliente || "—",
             montoApertura: c.pendienteInicial,
             heRecibido: c.heRecibido,
-            pendiente: pendienteFactura(c),
+            pendiente: balancePend(c),
             pago: c.pagoCompleto,
             vence: c.row.fechaVencimiento,
           }))
@@ -283,7 +305,7 @@ export function computeFactory(
 
     const entregueMes = sumPend(mesCalc);
     const recibidoMes = sumRecibido(mesCalc);
-    const pendienteMes = sumPendiente(mesCalc);
+    const pendienteMes = sumBalance(mesCalc);
     const hanPagadoMes = countPagaron(mesCalc);
     const hanPagadoMesPct =
       mesCalc.length > 0 ? Math.round((hanPagadoMes / mesCalc.length) * 100) : 0;
@@ -306,7 +328,7 @@ export function computeFactory(
   return {
     hoy,
     aperturasHoyCount: aperturasHoy.length,
-    aperturasHoyMonto: sumPend(aperturasHoy),
+    aperturasHoyMonto: sumBalance(aperturasHoy),
     aperturasSemanaCount: aperturasSemana.length,
     aperturasSemanaMonto,
     totalEntregarSabado: aperturasSemanaMonto,
