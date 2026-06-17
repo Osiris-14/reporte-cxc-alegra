@@ -12,6 +12,7 @@
  *                        ya descuenta notas de crédito (no depende de los pagos).
  *  - heRecibido        = SUM(MontoPago posteriores) * 1.06 (todos, aunque no
  *                        cubran el total).
+ *  - Monto esperado    = pendienteInicial (= "Entregué" por factura).
  *  - Entregué          = SUM(pendienteInicial).
  *  - Monto pend.       = BalancePendiente (campo del CSV cxc), NO MontoTotal.
  *  - Pendiente         = SUM(BalancePendiente).
@@ -40,9 +41,9 @@ export type Badge = "g" | "y" | "r" | "gray";
 export interface WeekFactura {
   comprobante: string;
   cliente: string;
-  montoApertura: number; // pendienteInicial
+  montoApertura: number; // "Monto esperado" = pendienteInicial
   heRecibido: number;
-  pendiente: number; // montoApertura − heRecibido
+  pendiente: number; // BalancePendiente del CSV
   pago: boolean; // pagóCompleto
   vence: Date | null;
 }
@@ -188,11 +189,13 @@ export function computeFactory(
   );
   const activas = calc.filter((c) => c.activa);
 
+  // "Monto esperado" / "Entregué" = pendienteInicial (MontoTotal − pago inicial).
+  // NO usar BalancePendiente: ese ya descuenta los pagos posteriores y queda en 0
+  // cuando el cliente terminó de pagar, perdiendo el monto que se entregó.
   const sumPend = (cs: FCalc[]) => cs.reduce((a, c) => a + c.pendienteInicial, 0);
   const sumRecibido = (cs: FCalc[]) => cs.reduce((a, c) => a + c.heRecibido, 0);
   const countPagaron = (cs: FCalc[]) => cs.filter((c) => c.pagoCompleto).length;
-  // "Monto pendiente" = campo BalancePendiente del CSV (cxc_Cuentasporcobrar),
-  // NO derivado de MontoTotal. Es el balance pendiente real de cada factura.
+  // "Monto pend." (tablas de aperturas) y "Pendiente" = BalancePendiente del CSV.
   const balancePend = (c: FCalc) => c.row.balancePendiente;
   const sumBalance = (cs: FCalc[]) =>
     cs.reduce((a, c) => a + balancePend(c), 0);
@@ -209,7 +212,7 @@ export function computeFactory(
   const aperturasSemana = activas.filter((c) =>
     inRange(c.row.fecha, lunes, hoy),
   );
-  const aperturasSemanaMonto = sumBalance(aperturasSemana);
+  const aperturasSemanaMonto = sumPend(aperturasSemana);
 
   const tablaHoy = aperturasHoy
     .map(toRow)
@@ -328,7 +331,7 @@ export function computeFactory(
   return {
     hoy,
     aperturasHoyCount: aperturasHoy.length,
-    aperturasHoyMonto: sumBalance(aperturasHoy),
+    aperturasHoyMonto: sumPend(aperturasHoy),
     aperturasSemanaCount: aperturasSemana.length,
     aperturasSemanaMonto,
     totalEntregarSabado: aperturasSemanaMonto,

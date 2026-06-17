@@ -1119,3 +1119,117 @@ body {
     border-bottom: none;
   }
 }
+
+/* ===========================================================================
+   Login + botón de salir (Topbar)
+   =========================================================================== */
+.login-wrap {
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border: 0.5px solid #e3e3e3;
+  border-radius: 14px;
+  padding: 32px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+.login-brand .app-name {
+  font-size: 16px;
+}
+
+.login-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.login-input {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #111;
+  margin-bottom: 16px;
+  outline: none;
+}
+
+.login-input:focus {
+  border-color: #e05252;
+}
+
+.login-error {
+  background: #fdecec;
+  color: #c0392b;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  margin-bottom: 16px;
+}
+
+.login-btn {
+  width: 100%;
+  background: #e05252;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-btn:hover {
+  background: #d04444;
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.tb-logout {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 99px;
+  padding: 5px 11px;
+  font-size: 11px;
+  color: #666;
+  cursor: pointer;
+}
+
+.tb-logout:hover {
+  background: #fdecec;
+  color: #e05252;
+}

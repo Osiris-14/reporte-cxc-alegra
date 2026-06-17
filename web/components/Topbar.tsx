@@ -39,6 +39,12 @@ export default function Topbar({
           {diaMesAnio(fechaCorte)}
         </div>
         <div className="avatar">RD</div>
+        <form action="/api/auth/logout" method="post">
+          <button type="submit" className="tb-logout" title="Cerrar sesión">
+            <i className="ti ti-logout" style={{ fontSize: 14 }} aria-hidden="true" />
+            <span className="tb-logout-txt">Salir</span>
+          </button>
+        </form>
       </div>
 
       {/* Bottom bar — solo visible en móvil (la nav superior se oculta) */}

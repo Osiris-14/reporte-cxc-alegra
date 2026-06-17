@@ -325,7 +325,7 @@ export default function FactoryView({
             bg="#eafaf0"
             color="#1a7a44"
             num={data.aperturasHoyCount}
-            delta={`${money(data.aperturasHoyMonto)} pendiente`}
+            delta={`${money(data.aperturasHoyMonto)} esperado`}
           />
           <MetricCard
             label="Aperturas esta semana"
@@ -333,7 +333,7 @@ export default function FactoryView({
             bg="#e9f4f8"
             color="#2a7d96"
             num={data.aperturasSemanaCount}
-            delta={`${money(data.aperturasSemanaMonto)} pendiente`}
+            delta={`${money(data.aperturasSemanaMonto)} esperado`}
           />
           <MetricCard
             label="Total a entregar sábado"
@@ -342,7 +342,7 @@ export default function FactoryView({
             color="#b7770a"
             numColor="#b7770a"
             num={money(data.totalEntregarSabado)}
-            delta="balance pendiente de la semana"
+            delta="monto esperado de la semana"
           />
           <MetricCard
             label={`Aperturas este mes (${MESES_LARGOS[mes]})`}
@@ -351,7 +351,7 @@ export default function FactoryView({
             color="#534AB7"
             numColor="#534AB7"
             num={mesData.total.entraron}
-            delta={`${money(mesData.total.pendiente)} pendiente`}
+            delta={`${money(mesData.total.entregue)} esperado`}
           />
         </div>
 
