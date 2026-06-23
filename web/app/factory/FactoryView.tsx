@@ -154,8 +154,8 @@ function CapitalBrutoDrill({ tx }: { tx: CapitalBrutoTx[] }) {
         <td className="a-l" data-label="Aporte (6% extraído)">{money(t.aporte)}</td>
       </tr>,
     );
-    // `while` por si una sola entrada cruza más de un millón de golpe.
-    while (Math.floor(acum / CICLO) > ciclos) {
+    // `while` por si una sola entrada cruza más de un umbral de golpe.
+    while (Math.floor(acum / CICLO_BRUTO) > ciclos) {
       ciclos += 1;
       filas.push(
         <tr key={`ciclo-${ciclos}`} className="ciclo-row ciclo-row-green">
@@ -196,7 +196,8 @@ function CapitalBrutoDrill({ tx }: { tx: CapitalBrutoTx[] }) {
   );
 }
 
-const CICLO = 1_000_000;
+const CICLO = 1_000_000; // Deuda (Salidas): múltiplos de $1,000,000
+const CICLO_BRUTO = 1_060_000; // Capital Bruto (Entradas): múltiplos de $1,060,000
 const ORDINALES_CICLO = [
   "Primer", "Segundo", "Tercer", "Cuarto", "Quinto",
   "Sexto", "Séptimo", "Octavo", "Noveno", "Décimo",

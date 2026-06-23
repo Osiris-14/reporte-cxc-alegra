@@ -183,6 +183,25 @@ body {
   gap: 10px;
 }
 
+/* Fila de 5 cards (Resumen: + "Cobrado esta semana"). Responsive autocontenido. */
+.metric-row-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 1024px) {
+  .metric-row-5 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .metric-row-5 {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Fondo Carryon — recuadro con borde encima de las cards */
 .fondo-box {
   border: 1px solid #e0ddf5;

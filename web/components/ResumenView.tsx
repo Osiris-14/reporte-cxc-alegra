@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Dashboard } from "@/lib/kpis";
 import { money, diaMesAnio } from "@/lib/format";
 
@@ -47,10 +50,11 @@ export default function ResumenView({
   dash: Dashboard;
   onTab: (n: number) => void;
 }) {
+  const [semOpen, setSemOpen] = useState(false);
   return (
     <div className="view">
       <div className="section-label">Indicadores de cartera</div>
-      <div className="metric-row">
+      <div className="metric-row-5">
         <div className="metric">
           <div className="m-top">
             <span className="m-lbl">Cartera total</span>
@@ -76,6 +80,39 @@ export default function ResumenView({
           </div>
           <div className="m-delta" style={{ color: "#999" }}>
             {dash.cobradoCount} instalaciones pagadas
+          </div>
+        </div>
+
+        <div
+          className={`metric metric-clickable${semOpen ? " metric-open" : ""}`}
+          onClick={() => setSemOpen((v) => !v)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setSemOpen((v) => !v);
+            }
+          }}
+        >
+          <div className="m-top">
+            <span className="m-lbl">
+              <i
+                className={`ti ti-chevron-${semOpen ? "down" : "right"}`}
+                style={{ fontSize: 11, marginRight: 3, verticalAlign: "middle" }}
+                aria-hidden="true"
+              />
+              Cobrado esta semana
+            </span>
+            <div className="m-ico" style={{ background: "#eafaf0", color: "#1a7a44" }}>
+              <i className="ti ti-calendar-check" aria-hidden="true" />
+            </div>
+          </div>
+          <div className="m-num" style={{ color: "#1a7a44" }}>
+            {money(dash.cobradoSemana)}
+          </div>
+          <div className="m-delta" style={{ color: "#999" }}>
+            {dash.cobradoSemanaCount} instalaciones · esta semana
           </div>
         </div>
 
@@ -109,6 +146,46 @@ export default function ResumenView({
           </div>
         </div>
       </div>
+
+      {semOpen && (
+        <div className="fondo-drill">
+          <table className="tb-full drill tb-stack">
+            <thead>
+              <tr>
+                <th style={{ width: "22%" }}>NCF</th>
+                <th style={{ width: "40%" }}>Cliente</th>
+                <th className="a-c" style={{ width: "18%" }}>Fecha de pago</th>
+                <th className="a-l" style={{ width: "20%" }}>Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dash.cobradoSemanaRows.length === 0 && (
+                <tr className="empty-row">
+                  <td colSpan={4}>Sin cobros esta semana</td>
+                </tr>
+              )}
+              {dash.cobradoSemanaRows.map((r) => (
+                <tr key={r.comprobante}>
+                  <td data-label="NCF">{r.comprobante}</td>
+                  <td className="client-cell" data-label="Cliente">{r.cliente}</td>
+                  <td className="muted a-c" data-label="Fecha de pago">
+                    {diaMesAnio(r.fechaPago)}
+                  </td>
+                  <td className="a-l" data-label="Monto">{money(r.monto)}</td>
+                </tr>
+              ))}
+              {dash.cobradoSemanaRows.length > 0 && (
+                <tr className="total-row">
+                  <td colSpan={3}>Total ({dash.cobradoSemanaCount})</td>
+                  <td className="a-l" style={{ color: "#1a7a44" }}>
+                    {money(dash.cobradoSemana)}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {dash.alertasReag.length > 0 && (
         <div className="alert-stack">

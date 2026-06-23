@@ -11,6 +11,8 @@ import {
   estadoAgenda,
   estadoCuenta,
   estadoVencimiento,
+  finSemana,
+  inicioSemana,
   pendienteLIT,
   pillUrgencia,
   totalLIT,
@@ -30,6 +32,16 @@ export interface TableRow {
   fechaReagendamiento: Date | null;
   /** Clase de badge del reagendamiento por urgencia (rojo/naranja/amarillo/verde). */
   reagClass: string;
+}
+
+/** Fila del drilldown "Cobrado esta semana": una por comprobante distinto. */
+export interface CobradoSemanaRow {
+  comprobante: string;
+  cliente: string;
+  /** Fecha del pago que califica (la más reciente, si hubo varias en la semana). */
+  fechaPago: Date | null;
+  /** Monto cobrado = SUM(MontoPago) de los pagos que califican en la semana. */
+  monto: number;
 }
 
 export interface StatusPill {
@@ -72,6 +84,11 @@ export interface Dashboard {
   carteraComprobantes: number;
   cobrado: number;
   cobradoCount: number;
+  /** "Cobrado esta semana": misma lógica que `cobrado` pero el criterio de
+   *  fecha es la semana en curso (lunes a domingo) en vez de "hoy". */
+  cobradoSemana: number;
+  cobradoSemanaCount: number;
+  cobradoSemanaRows: CobradoSemanaRow[];
   diasPromAtraso: number;
   concentracionPct: number;
   topDeudorNombre: string;
@@ -246,6 +263,52 @@ export function computeDashboard(
     }))
     .sort((a, b) => b.montoTotal - a.montoTotal);
 
+  // "Cobrado esta semana" — MISMA lógica que "Cobrado", pero el criterio de
+  // fecha pasa de "hoy" a "la semana en curso" (lunes a domingo):
+  //   FechaPago ∈ semana  &&  BalancePendiente(detalle) < 450  &&
+  //   (cxc.FechaVencimiento ∈ semana  ||  cxc.FechaReagendamiento ∈ semana)
+  const lunes = inicioSemana(hoy);
+  const domingo = finSemana(hoy);
+  const enSemana = (d: Date | null) =>
+    d !== null && d.getTime() >= lunes.getTime() && d.getTime() <= domingo.getTime();
+
+  const cobradoSemanaMap = new Map<
+    string,
+    { cliente: string; monto: number; fechaPago: Date | null }
+  >();
+  for (const d of pagos) {
+    const c = cxcMap.get(d.numeroComprobante);
+    if (!c) continue;
+    const califica =
+      enSemana(d.fechaPago) &&
+      d.balancePendiente < UMBRAL_PAGADO &&
+      (enSemana(c.fechaVencimiento) || enSemana(c.fechaReagendamiento));
+    if (!califica) continue;
+    const cur = cobradoSemanaMap.get(d.numeroComprobante) ?? {
+      cliente: d.cliente || c.cliente || "—",
+      monto: 0,
+      fechaPago: null as Date | null,
+    };
+    cur.monto += d.montoPago; // SUM(detalle[MontoPago]) de la semana
+    // Fecha de pago representativa: la más reciente que califica.
+    if (
+      d.fechaPago &&
+      (cur.fechaPago === null || d.fechaPago.getTime() > cur.fechaPago.getTime())
+    ) {
+      cur.fechaPago = d.fechaPago;
+    }
+    cobradoSemanaMap.set(d.numeroComprobante, cur);
+  }
+  const cobradoSemanaRows: CobradoSemanaRow[] = [...cobradoSemanaMap.entries()]
+    .map(([comprobante, v]) => ({
+      comprobante,
+      cliente: v.cliente,
+      fechaPago: v.fechaPago,
+      monto: v.monto,
+    }))
+    .sort((a, b) => b.monto - a.monto);
+  const cobradoSemana = cobradoSemanaRows.reduce((a, r) => a + r.monto, 0);
+
   // --- Días promedio de atraso (cuentas en atraso, desde febrero) ---
   const enAtraso = withState.filter((x) => x.ec === "Atraso" && desdeFeb(x.row));
   const diasPromAtraso =
@@ -392,6 +455,9 @@ export function computeDashboard(
     carteraComprobantes,
     cobrado: pagadasTotal,
     cobradoCount: pagadasRows.length,
+    cobradoSemana,
+    cobradoSemanaCount: cobradoSemanaRows.length,
+    cobradoSemanaRows,
     diasPromAtraso,
     concentracionPct,
     topDeudorNombre,
