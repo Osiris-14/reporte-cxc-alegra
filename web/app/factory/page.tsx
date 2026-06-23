@@ -10,6 +10,12 @@ export const revalidate = 0;
 export default async function FactoryPage() {
   const hoy = hoyRD();
   const data = await loadCxcData();
-  const factory = computeFactory(data.cxc, data.pagos, hoy);
+  const factory = computeFactory(
+    data.cxc,
+    data.pagos,
+    hoy,
+    data.factoringMovs,
+    data.factoringSaldo,
+  );
   return <FactoryView data={factory} fechaCorte={data.fechaCorte} />;
 }

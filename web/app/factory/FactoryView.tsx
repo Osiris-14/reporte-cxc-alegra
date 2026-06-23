@@ -6,6 +6,7 @@ import {
   Badge,
   FactoryData,
   FactoryRow,
+  FondoCarryon,
   MesData,
   WeekFactura,
 } from "@/lib/factory";
@@ -98,6 +99,53 @@ function MetricCard({
       </div>
       <div className="m-delta" style={{ color: "#999" }}>
         {delta}
+      </div>
+    </div>
+  );
+}
+
+function FondoCarryonBox({ fondo }: { fondo: FondoCarryon }) {
+  const dispNeg = fondo.disponible < 0;
+  return (
+    <div className="fondo-box">
+      <div className="fondo-title">
+        <i className="ti ti-building-bank" aria-hidden="true" />
+        Fondo Carryon
+      </div>
+      <div className="metric-row">
+        <MetricCard
+          label="Capital Neto"
+          icon="ti-wallet"
+          bg="#f0eeff"
+          color="#534AB7"
+          num={money(fondo.capitalNeto)}
+          delta=""
+        />
+        <MetricCard
+          label="Capital Bruto"
+          icon="ti-trending-up"
+          bg="#eafaf0"
+          color="#1a7a44"
+          num={money(fondo.capitalBruto)}
+          delta=""
+        />
+        <MetricCard
+          label="Deuda"
+          icon="ti-arrow-down-right"
+          bg="#fdecec"
+          color="#c0392b"
+          num={money(fondo.deuda)}
+          delta=""
+        />
+        <MetricCard
+          label="Disponible"
+          icon="ti-cash"
+          bg={dispNeg ? "#fdecec" : "#e9f4f8"}
+          color={dispNeg ? "#c0392b" : "#2a7d96"}
+          numColor={dispNeg ? "#e05252" : undefined}
+          num={money(fondo.disponible)}
+          delta=""
+        />
       </div>
     </div>
   );
@@ -316,6 +364,9 @@ export default function FactoryView({
       <Topbar fechaCorte={fechaCorte} active="factory" />
 
       <div className="view">
+        {/* Fondo Carryon — recuadro superior */}
+        <FondoCarryonBox fondo={data.fondo} />
+
         {/* Sección 1 — cards */}
         <div className="section-label">Producción — aperturas de facturas</div>
         <div className="metric-row">

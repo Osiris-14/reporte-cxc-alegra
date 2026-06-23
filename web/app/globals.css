@@ -183,6 +183,26 @@ body {
   gap: 10px;
 }
 
+/* Fondo Carryon — recuadro con borde encima de las cards */
+.fondo-box {
+  border: 1px solid #e0ddf5;
+  border-radius: 14px;
+  padding: 12px 14px 14px;
+  background: #faf9ff;
+}
+
+.fondo-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #534ab7;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .metric {
   background: #fff;
   border-radius: 12px;

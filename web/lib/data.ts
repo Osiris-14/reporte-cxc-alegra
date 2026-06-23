@@ -22,6 +22,8 @@ const FILES = {
   cxc: "cxc_Cuentasporcobrar.csv",
   pagos: "cxc_Pagos.csv",
   calendario: "calendario_instalacion.csv",
+  factoringBanco: "cxc_FactoringBanco.csv",
+  factoringSaldo: "cxc_FactoringBancoSaldo.csv",
 } as const;
 
 type FileKey = keyof typeof FILES;
@@ -142,6 +144,10 @@ export interface CxcData {
    * futuros.
    */
   fechaCorte: Date;
+  /** Movimientos de la cuenta Factoring Banco (para el "Fondo Carryon"). */
+  factoringMovs: FactoringMovRow[];
+  /** Saldo actual de Factoring Banco (negativo = deuda). */
+  factoringSaldo: number;
 }
 
 export interface PagoRow {
@@ -155,16 +161,26 @@ export interface PagoRow {
   idCruce: number | null;
 }
 
+/** Movimiento de la cuenta "Factoring Banco" (cxc_FactoringBanco.csv). */
+export interface FactoringMovRow {
+  fecha: Date | null;
+  tipo: string; // "Entrada" | "Salida"
+  valor: number; // punto decimal; + Entrada, − Salida
+}
+
 /**
  * Carga los 3 CSV, cruza cxc con el calendario y filtra al año del corte.
  * La fecha de corte ("datos al") se deriva de max(Fecha) del propio CSV.
  */
 export async function loadCxcData(): Promise<CxcData> {
-  const [cxcText, pagosText, calText] = await Promise.all([
-    readCsv("cxc"),
-    readCsv("pagos"),
-    readCsv("calendario"),
-  ]);
+  const [cxcText, pagosText, calText, factBancoText, factSaldoText] =
+    await Promise.all([
+      readCsv("cxc"),
+      readCsv("pagos"),
+      readCsv("calendario"),
+      readCsv("factoringBanco"),
+      readCsv("factoringSaldo"),
+    ]);
 
   const calRows = parse(calText);
   const calIndex = buildCalendarIndex(calRows);
@@ -221,5 +237,21 @@ export async function loadCxcData(): Promise<CxcData> {
     idCruce: idCruce((r["NumeroComprobante"] ?? "").trim()),
   }));
 
-  return { cxc, pagos, anioActual: anio, fechaCorte };
+  // Factoring Banco: movimientos (punto decimal) + saldo actual.
+  const factoringMovs: FactoringMovRow[] = parse(factBancoText).map((r) => ({
+    fecha: parseFecha(r["Fecha"]),
+    tipo: (r["Tipo"] ?? "").trim(),
+    valor: toNumber(r["Valor"]),
+  }));
+  const saldoRows = parse(factSaldoText);
+  const factoringSaldo = saldoRows.length ? toNumber(saldoRows[0]["Saldo"]) : 0;
+
+  return {
+    cxc,
+    pagos,
+    anioActual: anio,
+    fechaCorte,
+    factoringMovs,
+    factoringSaldo,
+  };
 }

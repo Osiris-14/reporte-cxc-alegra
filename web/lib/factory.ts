@@ -21,12 +21,52 @@
  * en cxc_Cuentasporcobrar o EstadoFactura=void en cxc_Pagos.
  */
 import { CxcRow, inicioSemana } from "./cxc-logic";
-import type { PagoRow } from "./data";
+import type { PagoRow, FactoringMovRow } from "./data";
 import { rangoSemana } from "./format";
 
 const DAY = 86_400_000;
 const UMBRAL_APERTURA = 300;
 const ITBIS = 1.06;
+
+// --- Fondo Carryon -------------------------------------------------------
+/** Capital neto: única constante fija del fondo (editable aquí). */
+export const CAPITAL_NETO = 1_000_000;
+/** Tasa de aporte por transacción de Entrada al capital bruto. */
+const APORTE_RATE = 0.06;
+/** Solo cuentan las Entradas desde el 2026-02-01 (inclusive). */
+const APORTE_DESDE = Date.UTC(2026, 1, 1);
+
+export interface FondoCarryon {
+  capitalNeto: number;
+  capitalBruto: number;
+  deuda: number;
+  disponible: number;
+}
+
+/**
+ * Calcula el Fondo Carryon a partir de los movimientos de Factoring Banco y su
+ * saldo. El capital bruto se acumula transacción por transacción (cada Entrada
+ * desde feb-2026 suma su propio 6%), para que nuevas filas del CSV aporten su
+ * parte individual sin reescribir la fórmula.
+ */
+export function computeFondo(
+  movs: FactoringMovRow[],
+  saldo: number,
+): FondoCarryon {
+  let capitalBruto = CAPITAL_NETO;
+  for (const m of movs) {
+    if (m.tipo !== "Entrada") continue;
+    if (!m.fecha || m.fecha.getTime() < APORTE_DESDE) continue;
+    capitalBruto += m.valor * APORTE_RATE; // aporte individual de la transacción
+  }
+  const deuda = Math.abs(saldo);
+  return {
+    capitalNeto: CAPITAL_NETO,
+    capitalBruto,
+    deuda,
+    disponible: CAPITAL_NETO - deuda,
+  };
+}
 
 export interface FactoryRow {
   comprobante: string;
@@ -84,6 +124,7 @@ export interface MesData {
 
 export interface FactoryData {
   hoy: Date;
+  fondo: FondoCarryon;
   aperturasHoyCount: number;
   aperturasHoyMonto: number;
   aperturasSemanaCount: number;
@@ -130,12 +171,21 @@ export function calcFactura(row: CxcRow, pagos: PagoRow[]): FCalc {
   const fechaFactura = row.fecha;
   let pagoInicial = 0;
   let posterior = 0;
+  let pagoAntesDeCrear = false; // pago con FechaPago < FechaCreación = error de captura
   for (const p of pagos) {
     if (!p.fechaPago || !fechaFactura) continue;
-    if (p.fechaPago.getTime() === fechaFactura.getTime()) pagoInicial += p.montoPago;
-    else if (p.fechaPago.getTime() > fechaFactura.getTime()) posterior += p.montoPago;
+    if (p.fechaPago.getTime() < fechaFactura.getTime()) pagoAntesDeCrear = true;
+    else if (p.fechaPago.getTime() === fechaFactura.getTime()) pagoInicial += p.montoPago;
+    else posterior += p.montoPago; // FechaPago > FechaCreación
   }
-  const pendienteInicial = row.montoTotal - pagoInicial;
+  // Excepción por error de captura: un pago NO puede ocurrir antes de que la
+  // factura exista. Cuando se detecta, la lógica de "pago inicial" no es
+  // confiable (el monto del pago no se resta como inicial), así que el Monto
+  // Esperado se toma del BalancePendiente del CSV, que Alegra ya calculó bien.
+  // En el caso normal se mantiene MontoTotal − pagoInicial.
+  const pendienteInicial = pagoAntesDeCrear
+    ? row.balancePendiente
+    : row.montoTotal - pagoInicial;
   // ¿Pagó completo? Se decide por BalancePendiente del CSV (Alegra ya descuenta
   // notas de crédito), NO por la suma de pagos en efectivo:
   //  - CASO 1: BalancePendiente <= 300 -> pagó completo (la diferencia que no
@@ -156,6 +206,8 @@ export function computeFactory(
   cxc: CxcRow[],
   pagos: PagoRow[],
   hoy: Date,
+  factoringMovs: FactoringMovRow[] = [],
+  factoringSaldo = 0,
 ): FactoryData {
   const anio = hoy.getUTCFullYear();
   const lunes = inicioSemana(hoy);
@@ -330,6 +382,7 @@ export function computeFactory(
 
   return {
     hoy,
+    fondo: computeFondo(factoringMovs, factoringSaldo),
     aperturasHoyCount: aperturasHoy.length,
     aperturasHoyMonto: sumPend(aperturasHoy),
     aperturasSemanaCount: aperturasSemana.length,
