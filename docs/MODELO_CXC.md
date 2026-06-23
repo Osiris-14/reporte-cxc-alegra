@@ -328,6 +328,29 @@ Los "estados" del dashboard (Vencidas, Hoy, Semana, Reagendadas, Atrasadas, Paga
 6. **Cruce calendario:** últimos 4 dígitos del comprobante = campo `p` del evento.
 7. **Estados derivados, no almacenados:** `Estado Cuenta`, `Estado Vencimiento`, `Estado Agenda`
    se recalculan cada día respecto a "hoy". En la web app deben ser **funciones**, no columnas fijas.
+8. **Fondo Carryon — Capital Bruto:** el `Valor` de cada Entrada **ya viene bruto** (incluye el 6%);
+   el aporte real se **extrae** del bruto, no se multiplica directo (ver sección 8.1).
+
+---
+
+## 8.1 Fondo Carryon (Factoring Banco)
+
+Origen: `cxc_FactoringBanco.csv` (movimientos `Entrada` / `Salida`). Lógica en `web/lib/factory.ts`
+(`computeFondo`).
+
+| Concepto | Fórmula |
+| --- | --- |
+| **Capital Neto** | constante fija = `RD$ 1,000,000` (`CAPITAL_NETO`). |
+| **Aporte por Entrada** | `aporte = Valor − (Valor / 1.06)` — solo Entradas desde **2026-02-01** (inclusive). |
+| **Capital Bruto** | `CAPITAL_NETO + SUM(aporte de cada Entrada)`. |
+| **Deuda** | `abs(saldo)`. |
+| **Disponible** | `CAPITAL_NETO − Deuda`. |
+
+> ⚠️ **Corrección importante:** el `Valor` de cada Entrada es el **monto bruto** que ya incluye
+> el 6% de interés. Por eso el aporte se **saca del bruto**:
+> `aporte = Valor − (Valor / 1.06)`, **no** `Valor * 0.06` (fórmula vieja, incorrecta).
+>
+> Ejemplo: `Valor = 1,000` → aporte = `1,000 − (1,000 / 1.06) = 56.60` (no 60).
 
 ---
 

@@ -31,8 +31,8 @@ const ITBIS = 1.06;
 // --- Fondo Carryon -------------------------------------------------------
 /** Capital neto: única constante fija del fondo (editable aquí). */
 export const CAPITAL_NETO = 1_000_000;
-/** Tasa de aporte por transacción de Entrada al capital bruto. */
-const APORTE_RATE = 0.06;
+/** Factor de interés (6%) incluido en el monto bruto de cada Entrada. */
+const FACTOR_INTERES = 1.06;
 /** Solo cuentan las Entradas desde el 2026-02-01 (inclusive). */
 const APORTE_DESDE = Date.UTC(2026, 1, 1);
 
@@ -45,9 +45,10 @@ export interface FondoCarryon {
 
 /**
  * Calcula el Fondo Carryon a partir de los movimientos de Factoring Banco y su
- * saldo. El capital bruto se acumula transacción por transacción (cada Entrada
- * desde feb-2026 suma su propio 6%), para que nuevas filas del CSV aporten su
- * parte individual sin reescribir la fórmula.
+ * saldo. El capital bruto se acumula transacción por transacción: el Valor de
+ * cada Entrada ya viene como monto BRUTO (incluye el 6%), así que el aporte real
+ * se extrae del bruto -> aporte = Valor - (Valor / 1.06). Nuevas filas del CSV
+ * aportan su parte individual sin reescribir la fórmula.
  */
 export function computeFondo(
   movs: FactoringMovRow[],
@@ -57,7 +58,8 @@ export function computeFondo(
   for (const m of movs) {
     if (m.tipo !== "Entrada") continue;
     if (!m.fecha || m.fecha.getTime() < APORTE_DESDE) continue;
-    capitalBruto += m.valor * APORTE_RATE; // aporte individual de la transacción
+    // El Valor es bruto (incluye el 6%): el aporte real se saca del bruto.
+    capitalBruto += m.valor - m.valor / FACTOR_INTERES;
   }
   const deuda = Math.abs(saldo);
   return {
