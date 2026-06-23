@@ -40,6 +40,16 @@ const APORTE_DESDE = Date.UTC(2026, 1, 1);
 /** Salidas con esta CuentaContable se excluyen del drilldown de Deuda: es el
  *  desembolso inicial del préstamo que originó el fondo, no una salida del fondo. */
 const CUENTA_PRESTAMO_INICIAL = "Préstamos por pagar";
+/** Entradas duplicadas/no reales: se excluyen del Capital Bruto por coincidencia
+ *  EXACTA de fecha (UTC) + valor (ni suman aporte ni aparecen en el drilldown). */
+const ENTRADAS_EXCLUIDAS: { fecha: number; valor: number }[] = [
+  { fecha: Date.UTC(2026, 2, 30), valor: 590_000 },
+  { fecha: Date.UTC(2026, 2, 30), valor: 398_086 },
+];
+const esEntradaExcluida = (fecha: Date, valor: number): boolean =>
+  ENTRADAS_EXCLUIDAS.some(
+    (e) => e.fecha === fecha.getTime() && e.valor === valor,
+  );
 
 /** Transacción "Entrada" que aporta al Capital Bruto (drilldown). */
 export interface CapitalBrutoTx {
@@ -85,6 +95,7 @@ export function computeFondo(
   for (const m of movs) {
     if (!m.fecha || m.fecha.getTime() < APORTE_DESDE) continue;
     if (m.tipo === "Entrada") {
+      if (esEntradaExcluida(m.fecha, m.valor)) continue; // duplicada/no real
       // El Valor es bruto (incluye el 6%): el aporte real se saca del bruto.
       const aporte = m.valor - m.valor / FACTOR_INTERES;
       capitalBruto += aporte;
@@ -104,10 +115,12 @@ export function computeFondo(
       });
     }
   }
-  const porFechaDesc = (a: { fecha: Date | null }, b: { fecha: Date | null }) =>
-    (b.fecha?.getTime() ?? 0) - (a.fecha?.getTime() ?? 0);
-  capitalBrutoTx.sort(porFechaDesc);
-  deudaTx.sort(porFechaDesc);
+  const ts = (x: { fecha: Date | null }) => x.fecha?.getTime() ?? 0;
+  // Capital Bruto: más reciente primero. Deuda: cronológico ascendente (más
+  // antigua primero), arrancando justo tras el préstamo inicial ya excluido,
+  // para poder marcar los "ciclos" de $1,000,000 con la suma corriente.
+  capitalBrutoTx.sort((a, b) => ts(b) - ts(a));
+  deudaTx.sort((a, b) => ts(a) - ts(b));
 
   const deuda = Math.abs(saldo);
   return {

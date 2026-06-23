@@ -241,6 +241,24 @@ body {
   margin: 0;
 }
 
+/* Separador de ciclo ($1M acumulado) en el drilldown de Deuda */
+.ciclo-row td {
+  background: #fdecec !important;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #c0392b;
+  text-transform: uppercase;
+  font-size: 10px;
+  padding: 7px 13px !important;
+}
+
+/* Variante verde para los ciclos del Capital Bruto (Entradas) */
+.ciclo-row-green td {
+  background: #eafaf0 !important;
+  color: #1a7a44;
+}
+
 .m-top {
   display: flex;
   align-items: center;
@@ -1120,6 +1138,11 @@ body {
   }
 
   .tb-stack tr.empty-row td::before {
+    content: "";
+    margin: 0;
+  }
+
+  .tb-stack tr.ciclo-row td::before {
     content: "";
     margin: 0;
   }

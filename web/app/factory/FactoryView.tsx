@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import Topbar from "@/components/Topbar";
 import {
   Badge,
@@ -138,6 +138,33 @@ function MetricCard({
 function CapitalBrutoDrill({ tx }: { tx: CapitalBrutoTx[] }) {
   const totalValor = tx.reduce((a, t) => a + t.valor, 0);
   const totalAporte = tx.reduce((a, t) => a + t.aporte, 0);
+  // tx llega DESCENDENTE; se recorre en ASCENDENTE (suma corriente del Valor)
+  // para marcar los ciclos de $1M, y luego se invierte todo para mostrar la
+  // tabla descendente con los marcadores en su frontera (igual que Deuda).
+  const filas: ReactNode[] = [];
+  let acum = 0;
+  let ciclos = 0;
+  [...tx].reverse().forEach((t, i) => {
+    acum += t.valor;
+    filas.push(
+      <tr key={`tx-${i}`}>
+        <td className="muted" data-label="Fecha">{diaMesAnio(t.fecha)}</td>
+        <td className="client-cell" data-label="Tercero / Concepto">{t.tercero || "—"}</td>
+        <td className="a-l" data-label="Valor">{money(t.valor)}</td>
+        <td className="a-l" data-label="Aporte (6% extraído)">{money(t.aporte)}</td>
+      </tr>,
+    );
+    // `while` por si una sola entrada cruza más de un millón de golpe.
+    while (Math.floor(acum / CICLO) > ciclos) {
+      ciclos += 1;
+      filas.push(
+        <tr key={`ciclo-${ciclos}`} className="ciclo-row ciclo-row-green">
+          <td colSpan={4}>{cicloPagoLabel(ciclos)}</td>
+        </tr>,
+      );
+    }
+  });
+  filas.reverse(); // mostrar descendente, marcadores ya en su posición
   return (
     <div className="fondo-drill">
       <table className="tb-full drill tb-stack">
@@ -155,14 +182,7 @@ function CapitalBrutoDrill({ tx }: { tx: CapitalBrutoTx[] }) {
               <td colSpan={4}>Sin entradas desde feb-2026</td>
             </tr>
           )}
-          {tx.map((t, i) => (
-            <tr key={i}>
-              <td className="muted" data-label="Fecha">{diaMesAnio(t.fecha)}</td>
-              <td className="client-cell" data-label="Tercero / Concepto">{t.tercero || "—"}</td>
-              <td className="a-l" data-label="Valor">{money(t.valor)}</td>
-              <td className="a-l" data-label="Aporte (6% extraído)">{money(t.aporte)}</td>
-            </tr>
-          ))}
+          {filas}
           {tx.length > 0 && (
             <tr className="total-row">
               <td colSpan={2}>Total ({tx.length})</td>
@@ -176,8 +196,54 @@ function CapitalBrutoDrill({ tx }: { tx: CapitalBrutoTx[] }) {
   );
 }
 
+const CICLO = 1_000_000;
+const ORDINALES_CICLO = [
+  "Primer", "Segundo", "Tercer", "Cuarto", "Quinto",
+  "Sexto", "Séptimo", "Octavo", "Noveno", "Décimo",
+];
+
+function cicloLabel(n: number): string {
+  const ord = ORDINALES_CICLO[n - 1];
+  return ord ? `— ${ord} ciclo —` : `— Ciclo ${n} —`;
+}
+
+function cicloPagoLabel(n: number): string {
+  const ord = ORDINALES_CICLO[n - 1];
+  return ord
+    ? `— Pago del ${ord.toLowerCase()} ciclo —`
+    : `— Pago del ciclo ${n} —`;
+}
+
 function DeudaDrill({ tx }: { tx: DeudaTx[] }) {
   const total = tx.reduce((a, t) => a + t.valor, 0);
+  // Los ciclos se calculan en orden ASCENDENTE (suma corriente, separador tras
+  // la salida que cruza cada múltiplo de $1M). Luego se invierte la secuencia
+  // completa para mostrar la tabla DESCENDENTE (más reciente primero) sin mover
+  // los marcadores de su frontera entre transacciones.
+  const filas: ReactNode[] = [];
+  let acum = 0;
+  let ciclos = 0;
+  tx.forEach((t, i) => {
+    acum += t.valor;
+    filas.push(
+      <tr key={`tx-${i}`}>
+        <td className="muted" data-label="Fecha">{diaMesAnio(t.fecha)}</td>
+        <td className="client-cell" data-label="Tercero">{t.tercero || "—"}</td>
+        <td className="client-cell" data-label="CuentaContable">{t.cuentaContable || "—"}</td>
+        <td className="a-l" data-label="Valor">{money(t.valor)}</td>
+      </tr>,
+    );
+    // `while` por si una sola salida cruza más de un millón de golpe.
+    while (Math.floor(acum / CICLO) > ciclos) {
+      ciclos += 1;
+      filas.push(
+        <tr key={`ciclo-${ciclos}`} className="ciclo-row">
+          <td colSpan={4}>{cicloLabel(ciclos)}</td>
+        </tr>,
+      );
+    }
+  });
+  filas.reverse(); // mostrar descendente, marcadores ya en su posición
   return (
     <div className="fondo-drill">
       <table className="tb-full drill tb-stack">
@@ -195,14 +261,7 @@ function DeudaDrill({ tx }: { tx: DeudaTx[] }) {
               <td colSpan={4}>Sin salidas desde feb-2026</td>
             </tr>
           )}
-          {tx.map((t, i) => (
-            <tr key={i}>
-              <td className="muted" data-label="Fecha">{diaMesAnio(t.fecha)}</td>
-              <td className="client-cell" data-label="Tercero">{t.tercero || "—"}</td>
-              <td className="client-cell" data-label="CuentaContable">{t.cuentaContable || "—"}</td>
-              <td className="a-l" data-label="Valor">{money(t.valor)}</td>
-            </tr>
-          ))}
+          {filas}
           {tx.length > 0 && (
             <tr className="total-row">
               <td colSpan={3}>Total ({tx.length})</td>
