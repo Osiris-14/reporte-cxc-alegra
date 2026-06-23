@@ -4,6 +4,8 @@ import { Fragment, useEffect, useState } from "react";
 import Topbar from "@/components/Topbar";
 import {
   Badge,
+  CapitalBrutoTx,
+  DeudaTx,
   FactoryData,
   FactoryRow,
   FondoCarryon,
@@ -77,6 +79,8 @@ function MetricCard({
   num,
   delta,
   numColor,
+  onClick,
+  expanded,
 }: {
   label: string;
   icon: string;
@@ -85,11 +89,38 @@ function MetricCard({
   num: string | number;
   delta: string;
   numColor?: string;
+  onClick?: () => void;
+  expanded?: boolean;
 }) {
+  const clickable = onClick !== undefined;
   return (
-    <div className="metric">
+    <div
+      className={`metric${clickable ? " metric-clickable" : ""}${expanded ? " metric-open" : ""}`}
+      onClick={onClick}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={
+        clickable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick?.();
+              }
+            }
+          : undefined
+      }
+    >
       <div className="m-top">
-        <span className="m-lbl">{label}</span>
+        <span className="m-lbl">
+          {clickable && (
+            <i
+              className={`ti ti-chevron-${expanded ? "down" : "right"}`}
+              style={{ fontSize: 11, marginRight: 3, verticalAlign: "middle" }}
+              aria-hidden="true"
+            />
+          )}
+          {label}
+        </span>
         <div className="m-ico" style={{ background: bg, color }}>
           <i className={`ti ${icon}`} aria-hidden="true" />
         </div>
@@ -104,8 +135,91 @@ function MetricCard({
   );
 }
 
+function CapitalBrutoDrill({ tx }: { tx: CapitalBrutoTx[] }) {
+  const totalValor = tx.reduce((a, t) => a + t.valor, 0);
+  const totalAporte = tx.reduce((a, t) => a + t.aporte, 0);
+  return (
+    <div className="fondo-drill">
+      <table className="tb-full drill tb-stack">
+        <thead>
+          <tr>
+            <th style={{ width: "16%" }}>Fecha</th>
+            <th style={{ width: "44%" }}>Tercero / Concepto</th>
+            <th className="a-l" style={{ width: "20%" }}>Valor</th>
+            <th className="a-l" style={{ width: "20%" }}>Aporte (6% extraído)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tx.length === 0 && (
+            <tr className="empty-row">
+              <td colSpan={4}>Sin entradas desde feb-2026</td>
+            </tr>
+          )}
+          {tx.map((t, i) => (
+            <tr key={i}>
+              <td className="muted" data-label="Fecha">{diaMesAnio(t.fecha)}</td>
+              <td className="client-cell" data-label="Tercero / Concepto">{t.tercero || "—"}</td>
+              <td className="a-l" data-label="Valor">{money(t.valor)}</td>
+              <td className="a-l" data-label="Aporte (6% extraído)">{money(t.aporte)}</td>
+            </tr>
+          ))}
+          {tx.length > 0 && (
+            <tr className="total-row">
+              <td colSpan={2}>Total ({tx.length})</td>
+              <td className="a-l">{money(totalValor)}</td>
+              <td className="a-l">{money(totalAporte)}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function DeudaDrill({ tx }: { tx: DeudaTx[] }) {
+  const total = tx.reduce((a, t) => a + t.valor, 0);
+  return (
+    <div className="fondo-drill">
+      <table className="tb-full drill tb-stack">
+        <thead>
+          <tr>
+            <th style={{ width: "16%" }}>Fecha</th>
+            <th style={{ width: "38%" }}>Tercero</th>
+            <th style={{ width: "28%" }}>CuentaContable</th>
+            <th className="a-l" style={{ width: "18%" }}>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tx.length === 0 && (
+            <tr className="empty-row">
+              <td colSpan={4}>Sin salidas desde feb-2026</td>
+            </tr>
+          )}
+          {tx.map((t, i) => (
+            <tr key={i}>
+              <td className="muted" data-label="Fecha">{diaMesAnio(t.fecha)}</td>
+              <td className="client-cell" data-label="Tercero">{t.tercero || "—"}</td>
+              <td className="client-cell" data-label="CuentaContable">{t.cuentaContable || "—"}</td>
+              <td className="a-l" data-label="Valor">{money(t.valor)}</td>
+            </tr>
+          ))}
+          {tx.length > 0 && (
+            <tr className="total-row">
+              <td colSpan={3}>Total ({tx.length})</td>
+              <td className="a-l">{money(total)}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function FondoCarryonBox({ fondo }: { fondo: FondoCarryon }) {
   const dispNeg = fondo.disponible < 0;
+  const [abierta, setAbierta] = useState<"bruto" | "deuda" | null>(null);
+  const toggle = (k: "bruto" | "deuda") =>
+    setAbierta((a) => (a === k ? null : k));
   return (
     <div className="fondo-box">
       <div className="fondo-title">
@@ -128,6 +242,8 @@ function FondoCarryonBox({ fondo }: { fondo: FondoCarryon }) {
           color="#1a7a44"
           num={money(fondo.capitalBruto)}
           delta=""
+          onClick={() => toggle("bruto")}
+          expanded={abierta === "bruto"}
         />
         <MetricCard
           label="Deuda"
@@ -136,6 +252,8 @@ function FondoCarryonBox({ fondo }: { fondo: FondoCarryon }) {
           color="#c0392b"
           num={money(fondo.deuda)}
           delta=""
+          onClick={() => toggle("deuda")}
+          expanded={abierta === "deuda"}
         />
         <MetricCard
           label="Disponible"
@@ -147,6 +265,8 @@ function FondoCarryonBox({ fondo }: { fondo: FondoCarryon }) {
           delta=""
         />
       </div>
+      {abierta === "bruto" && <CapitalBrutoDrill tx={fondo.capitalBrutoTx} />}
+      {abierta === "deuda" && <DeudaDrill tx={fondo.deudaTx} />}
     </div>
   );
 }

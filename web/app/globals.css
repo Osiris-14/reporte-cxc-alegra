@@ -213,6 +213,34 @@ body {
   gap: 3px;
 }
 
+/* Cards expandibles del Fondo Carryon (Capital Bruto / Deuda) */
+.metric-clickable {
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.metric-clickable:hover {
+  border-color: #c9c4ee;
+  box-shadow: 0 1px 4px rgba(83, 74, 183, 0.08);
+}
+
+.metric-open {
+  border-color: #534ab7;
+}
+
+/* Panel de detalle (drilldown) que se abre bajo las cards del fondo */
+.fondo-drill {
+  margin-top: 10px;
+  background: #f7f9fb;
+  border: 0.5px solid #e6ecf0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.fondo-drill .drill {
+  margin: 0;
+}
+
 .m-top {
   display: flex;
   align-items: center;

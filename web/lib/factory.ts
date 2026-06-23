@@ -6,6 +6,8 @@
  * Definiciones clave (por factura, match detalle.NumeroComprobante = cxc.NumeroComprobante):
  *  - Pago inicial      = pagos con FechaPago = FechaFactura (día de apertura).
  *  - Pagos posteriores = pagos con FechaPago > FechaFactura.
+ *  - fechaApertura     = primer FechaPago de la factura (fallback FechaCreación
+ *                        si no tiene pagos). Define la semana/mes de apertura.
  *  - pendienteInicial  = MontoTotal − pagoInicial.
  *  - Apertura activa   = pendienteInicial > 300.
  *  - pagóCompleto      = BalancePendiente (CSV) <= 300. Lo confirma Alegra, que
@@ -35,12 +37,35 @@ export const CAPITAL_NETO = 1_000_000;
 const FACTOR_INTERES = 1.06;
 /** Solo cuentan las Entradas desde el 2026-02-01 (inclusive). */
 const APORTE_DESDE = Date.UTC(2026, 1, 1);
+/** Salidas con esta CuentaContable se excluyen del drilldown de Deuda: es el
+ *  desembolso inicial del préstamo que originó el fondo, no una salida del fondo. */
+const CUENTA_PRESTAMO_INICIAL = "Préstamos por pagar";
+
+/** Transacción "Entrada" que aporta al Capital Bruto (drilldown). */
+export interface CapitalBrutoTx {
+  fecha: Date | null;
+  tercero: string;
+  valor: number; // monto recibido (bruto, incluye el 6%)
+  aporte: number; // = valor − valor/1.06
+}
+
+/** Transacción "Salida" del fondo (drilldown de Deuda). */
+export interface DeudaTx {
+  fecha: Date | null;
+  tercero: string;
+  cuentaContable: string;
+  valor: number; // magnitud de la salida (positivo)
+}
 
 export interface FondoCarryon {
   capitalNeto: number;
   capitalBruto: number;
   deuda: number;
   disponible: number;
+  /** Entradas desde 2026-02-01 que componen el Capital Bruto (fecha desc). */
+  capitalBrutoTx: CapitalBrutoTx[];
+  /** Salidas desde 2026-02-01 (fecha desc). */
+  deudaTx: DeudaTx[];
 }
 
 /**
@@ -55,18 +80,43 @@ export function computeFondo(
   saldo: number,
 ): FondoCarryon {
   let capitalBruto = CAPITAL_NETO;
+  const capitalBrutoTx: CapitalBrutoTx[] = [];
+  const deudaTx: DeudaTx[] = [];
   for (const m of movs) {
-    if (m.tipo !== "Entrada") continue;
     if (!m.fecha || m.fecha.getTime() < APORTE_DESDE) continue;
-    // El Valor es bruto (incluye el 6%): el aporte real se saca del bruto.
-    capitalBruto += m.valor - m.valor / FACTOR_INTERES;
+    if (m.tipo === "Entrada") {
+      // El Valor es bruto (incluye el 6%): el aporte real se saca del bruto.
+      const aporte = m.valor - m.valor / FACTOR_INTERES;
+      capitalBruto += aporte;
+      capitalBrutoTx.push({
+        fecha: m.fecha,
+        tercero: m.tercero,
+        valor: m.valor,
+        aporte,
+      });
+    } else if (m.tipo === "Salida") {
+      if (m.cuentaContable === CUENTA_PRESTAMO_INICIAL) continue; // préstamo inicial
+      deudaTx.push({
+        fecha: m.fecha,
+        tercero: m.tercero,
+        cuentaContable: m.cuentaContable,
+        valor: Math.abs(m.valor), // en el CSV las salidas vienen negativas
+      });
+    }
   }
+  const porFechaDesc = (a: { fecha: Date | null }, b: { fecha: Date | null }) =>
+    (b.fecha?.getTime() ?? 0) - (a.fecha?.getTime() ?? 0);
+  capitalBrutoTx.sort(porFechaDesc);
+  deudaTx.sort(porFechaDesc);
+
   const deuda = Math.abs(saldo);
   return {
     capitalNeto: CAPITAL_NETO,
     capitalBruto,
     deuda,
     disponible: CAPITAL_NETO - deuda,
+    capitalBrutoTx,
+    deudaTx,
   };
 }
 
@@ -141,6 +191,9 @@ export interface FactoryData {
 /** Cálculo por factura: apertura, pagos posteriores y si pagó completo. */
 interface FCalc {
   row: CxcRow;
+  /** Fecha de apertura = primer FechaPago de la factura (fallback FechaCreación
+   *  si no tiene pagos). Es la fecha con la que se agrupa por semana/mes. */
+  fechaApertura: Date | null;
   pendienteInicial: number;
   heRecibido: number;
   pagoCompleto: boolean;
@@ -174,12 +227,17 @@ export function calcFactura(row: CxcRow, pagos: PagoRow[]): FCalc {
   let pagoInicial = 0;
   let posterior = 0;
   let pagoAntesDeCrear = false; // pago con FechaPago < FechaCreación = error de captura
+  let primerPago: Date | null = null; // FechaPago más temprana de la factura
   for (const p of pagos) {
     if (!p.fechaPago || !fechaFactura) continue;
+    if (primerPago === null || p.fechaPago.getTime() < primerPago.getTime())
+      primerPago = p.fechaPago;
     if (p.fechaPago.getTime() < fechaFactura.getTime()) pagoAntesDeCrear = true;
     else if (p.fechaPago.getTime() === fechaFactura.getTime()) pagoInicial += p.montoPago;
     else posterior += p.montoPago; // FechaPago > FechaCreación
   }
+  // Apertura = primer pago (cuando existe); si no hay pagos, FechaCreación.
+  const fechaApertura = primerPago ?? fechaFactura;
   // Excepción por error de captura: un pago NO puede ocurrir antes de que la
   // factura exista. Cuando se detecta, la lógica de "pago inicial" no es
   // confiable (el monto del pago no se resta como inicial), así que el Monto
@@ -197,6 +255,7 @@ export function calcFactura(row: CxcRow, pagos: PagoRow[]): FCalc {
   // aunque no cubran el total, en ambos casos.
   return {
     row,
+    fechaApertura,
     pendienteInicial,
     heRecibido: posterior * ITBIS,
     pagoCompleto: row.balancePendiente <= UMBRAL_APERTURA,
@@ -258,13 +317,14 @@ export function computeFactory(
     comprobante: c.row.numeroComprobante,
     cliente: c.row.cliente || "—",
     montoPendiente: balancePend(c),
-    fecha: c.row.fecha,
+    fecha: c.fechaApertura,
   });
 
   // --- Cards + tablas (aperturas activas) ---
-  const aperturasHoy = activas.filter((c) => sameDay(c.row.fecha, hoy));
+  // "Apertura" se agrupa por fechaApertura (primer pago), no por FechaCreación.
+  const aperturasHoy = activas.filter((c) => sameDay(c.fechaApertura, hoy));
   const aperturasSemana = activas.filter((c) =>
-    inRange(c.row.fecha, lunes, hoy),
+    inRange(c.fechaApertura, lunes, hoy),
   );
   const aperturasSemanaMonto = sumPend(aperturasSemana);
 
@@ -302,13 +362,13 @@ export function computeFactory(
   for (let m = 0; m < 12; m++) {
     const mesCalc = activas.filter(
       (c) =>
-        c.row.fecha != null &&
-        c.row.fecha.getUTCFullYear() === anio &&
-        c.row.fecha.getUTCMonth() === m,
+        c.fechaApertura != null &&
+        c.fechaApertura.getUTCFullYear() === anio &&
+        c.fechaApertura.getUTCMonth() === m,
     );
 
     const semanas: WeekRow[] = semanasDelMes(anio, m).map((wk, i) => {
-      const cs = mesCalc.filter((c) => inRange(c.row.fecha, wk.start, wk.end));
+      const cs = mesCalc.filter((c) => inRange(c.fechaApertura, wk.start, wk.end));
       const base = { label: `Sem ${i + 1}`, rango: rangoSemana(wk.start, wk.end) };
       if (cs.length === 0) {
         return {

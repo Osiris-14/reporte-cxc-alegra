@@ -164,6 +164,8 @@ export interface PagoRow {
 /** Movimiento de la cuenta "Factoring Banco" (cxc_FactoringBanco.csv). */
 export interface FactoringMovRow {
   fecha: Date | null;
+  tercero: string;
+  cuentaContable: string;
   tipo: string; // "Entrada" | "Salida"
   valor: number; // punto decimal; + Entrada, − Salida
 }
@@ -240,6 +242,8 @@ export async function loadCxcData(): Promise<CxcData> {
   // Factoring Banco: movimientos (punto decimal) + saldo actual.
   const factoringMovs: FactoringMovRow[] = parse(factBancoText).map((r) => ({
     fecha: parseFecha(r["Fecha"]),
+    tercero: (r["Tercero"] ?? "").trim(),
+    cuentaContable: (r["CuentaContable"] ?? "").trim(),
     tipo: (r["Tipo"] ?? "").trim(),
     valor: toNumber(r["Valor"]),
   }));
