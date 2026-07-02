@@ -34,6 +34,7 @@ jobs:
           ALEGRA_TOKEN: ${{ secrets.ALEGRA_TOKEN }}
 
       - name: Ejecutar Factoring Banco
+        continue-on-error: true
         run: python banco_factoring.py
         env:
           ALEGRA_EMAIL: ${{ secrets.ALEGRA_EMAIL }}

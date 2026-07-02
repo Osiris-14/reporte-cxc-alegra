@@ -53,17 +53,26 @@ SESSION.auth = AUTH
 SESSION.headers.update(HEADERS)
 
 
+class RateLimitAgotado(Exception):
+    """Se agotaron los reintentos por rate-limit (429) o 5xx."""
+
+
 def api_get(path, params):
-    """GET con reintento simple ante rate-limit (429) o 5xx."""
-    for intento in range(5):
+    """GET con reintentos y backoff exponencial ante rate-limit (429) o 5xx.
+
+    Tras agotar los reintentos lanza RateLimitAgotado (no SystemExit) para que
+    quien llama pueda guardar los datos ya descargados en vez de abortar todo.
+    """
+    for intento in range(8):
         r = SESSION.get(f"{BASE}/{path}", params=params)
         if r.status_code == 200:
             return r.json()
         if r.status_code == 429 or r.status_code >= 500:
-            time.sleep(2 * (intento + 1))
+            # backoff exponencial con tope: 2, 4, 8, 16, 32, 60, 60, 60 s
+            time.sleep(min(2 ** (intento + 1), 60))
             continue
         raise SystemExit(f"ERROR {path}: {r.status_code} {r.text[:300]}")
-    raise SystemExit(f"ERROR {path}: agotados los reintentos (rate-limit/5xx)")
+    raise RateLimitAgotado(f"{path}: agotados los reintentos (rate-limit/5xx)")
 
 
 def bank_id(p):
@@ -141,52 +150,61 @@ print(f"  {cuenta.get('name')} | saldo={cuenta.get('balance')} | "
 # PASO 2 — Movimientos del año (desde /payments, in + out)
 # ===============================
 filas = []
-for tipo, signo in (("in", 1), ("out", -1)):
-    etiqueta = "Entrada" if tipo == "in" else "Salida"
-    print(f"PASO 2 — Descargando /payments type={tipo} ...", flush=True)
-    start = 0
-    while True:
-        data = api_get("payments", {
-            "type": tipo,
-            "start": start,
-            "limit": LIMIT,
-            "order_field": "date",
-            "order_direction": "DESC",
-            "fields": "conciliation",
-        })
-        records = data["data"] if isinstance(data, dict) and "data" in data else data
-        if not records:
-            break
-
-        # DESC por fecha: si toda la página ya es de años anteriores, paramos.
-        fecha_min_pagina = min((p.get("date") or "" for p in records), default="")
-
-        for p in records:
-            fecha = p.get("date") or ""
-            if not fecha.startswith(str(ANIO)):
-                continue
-            if bank_id(p) != CUENTA_ID:
-                continue
-            valor = float(p.get("amount") or 0) * signo
-            filas.append({
-                "Fecha": fecha,
-                "Tercero": tercero(p),
-                "CuentaContable": cuenta_contable(p),
-                "Tipo": etiqueta,
-                "Conciliado": conciliado(p),
-                "Valor": valor,
+try:
+    for tipo, signo in (("in", 1), ("out", -1)):
+        etiqueta = "Entrada" if tipo == "in" else "Salida"
+        print(f"PASO 2 — Descargando /payments type={tipo} ...", flush=True)
+        start = 0
+        while True:
+            data = api_get("payments", {
+                "type": tipo,
+                "start": start,
+                "limit": LIMIT,
+                "order_field": "date",
+                "order_direction": "DESC",
+                "fields": "conciliation",
             })
+            records = data["data"] if isinstance(data, dict) and "data" in data else data
+            if not records:
+                break
 
-        start += LIMIT
-        if start % 600 == 0:
-            print(f"    ... escaneados {start} pagos {tipo}, "
-                  f"{len(filas)} filas acumuladas", flush=True)
+            # DESC por fecha: si toda la página ya es de años anteriores, paramos.
+            fecha_min_pagina = min((p.get("date") or "" for p in records), default="")
 
-        if fecha_min_pagina and fecha_min_pagina < f"{ANIO}-01-01":
-            break
-        if len(records) < LIMIT:
-            break
-    print(f"  Acumulado: {len(filas)} filas", flush=True)
+            for p in records:
+                fecha = p.get("date") or ""
+                if not fecha.startswith(str(ANIO)):
+                    continue
+                if bank_id(p) != CUENTA_ID:
+                    continue
+                valor = float(p.get("amount") or 0) * signo
+                filas.append({
+                    "Fecha": fecha,
+                    "Tercero": tercero(p),
+                    "CuentaContable": cuenta_contable(p),
+                    "Tipo": etiqueta,
+                    "Conciliado": conciliado(p),
+                    "Valor": valor,
+                })
+
+            start += LIMIT
+            if start % 600 == 0:
+                print(f"    ... escaneados {start} pagos {tipo}, "
+                      f"{len(filas)} filas acumuladas", flush=True)
+
+            if fecha_min_pagina and fecha_min_pagina < f"{ANIO}-01-01":
+                break
+            if len(records) < LIMIT:
+                break
+
+            # Pausa entre páginas para no gatillar el rate-limit de Alegra.
+            time.sleep(10)
+        print(f"  Acumulado: {len(filas)} filas", flush=True)
+except RateLimitAgotado as e:
+    # Rate-limit persistente: no abortamos. Guardamos lo ya descargado para que
+    # el resto del pipeline (cxc.py, subir CSV, redeploy) siga corriendo.
+    print(f"\n⚠️  Rate-limit persistente en /payments: {e}", flush=True)
+    print(f"    Guardando CSV con las {len(filas)} filas ya descargadas.", flush=True)
 
 # ===============================
 # TRANSFORM + EXPORT
