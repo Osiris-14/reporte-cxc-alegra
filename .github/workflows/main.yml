@@ -62,4 +62,5 @@ jobs:
           git push origin main
 
       - name: Trigger Vercel redeploy
+        if: always()
         run: curl -X POST ${{ secrets.VERCEL_DEPLOY_HOOK }}
