@@ -507,9 +507,11 @@ function MonthlyTable({ mesData, query }: { mesData: MesData; query: string }) {
 export default function FactoryView({
   data,
   fechaCorte,
+  renderedAt,
 }: {
   data: FactoryData;
   fechaCorte: Date;
+  renderedAt?: Date;
 }) {
   const [mes, setMes] = useState(data.mesActual);
   const [query, setQuery] = useState("");
@@ -541,7 +543,7 @@ export default function FactoryView({
 
   return (
     <div className="app">
-      <Topbar fechaCorte={fechaCorte} active="factory" />
+      <Topbar fechaCorte={fechaCorte} renderedAt={renderedAt} active="factory" />
 
       <div className="view">
         {/* Fondo Carryon — recuadro superior */}

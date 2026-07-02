@@ -15,5 +15,6 @@ export default async function CxcPage() {
   const hoy = hoyRD();
   const data = await loadCxcData();
   const dash = computeDashboard(data.cxc, data.pagos, hoy);
-  return <Dashboard dash={dash} fechaCorte={data.fechaCorte} />;
+  // Momento de render (server) → hora de "última actualización" en el Topbar.
+  return <Dashboard dash={dash} fechaCorte={data.fechaCorte} renderedAt={new Date()} />;
 }

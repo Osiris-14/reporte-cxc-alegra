@@ -18,6 +18,8 @@ export interface CxcRow {
   idCruce: number | null;
   etiqueta: string | null; // Calendario[etiqueta] vía SELECTEDVALUE
   fechaReagendamiento: Date | null; // Calendario[inicio] vía SELECTEDVALUE
+  titulo: string | null; // Calendario[titulo] vía SELECTEDVALUE (para Talonario/Vehículo)
+  observaciones: string; // Nota impresa de la factura (para extraer Talonario)
 }
 
 export type EstadoCuenta = "Cerrado" | "Atraso" | "Open";

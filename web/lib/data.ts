@@ -24,6 +24,7 @@ const FILES = {
   calendario: "calendario_instalacion.csv",
   factoringBanco: "cxc_FactoringBanco.csv",
   factoringSaldo: "cxc_FactoringBancoSaldo.csv",
+  items: "cxc_Items.csv",
 } as const;
 
 type FileKey = keyof typeof FILES;
@@ -52,6 +53,19 @@ async function readCsv(key: FileKey): Promise<string> {
   const repoRoot = path.resolve(process.cwd(), "..");
   const full = path.join(repoRoot, file);
   return fs.readFile(full, "utf8");
+}
+
+/**
+ * Lee un CSV opcional: si aún no existe (p. ej. cxc_Items.csv sin commitear a
+ * GitHub todavía), devuelve "" en vez de romper toda la carga. Los consumidores
+ * lo tratan como "sin filas".
+ */
+async function readCsvOpcional(key: FileKey): Promise<string> {
+  try {
+    return await readCsv(key);
+  } catch {
+    return "";
+  }
 }
 
 /** Parsea un CSV a objetos con headers, tolerando comillas/saltos de línea. */
@@ -88,6 +102,7 @@ interface CalEntry {
   p: number;
   etiqueta: string | null;
   inicio: Date | null;
+  titulo: string | null;
 }
 
 /**
@@ -109,6 +124,7 @@ function buildCalendarIndex(
       p,
       etiqueta: (r["etiqueta"] ?? "").trim() || null,
       inicio: parseFecha(r["inicio"]),
+      titulo: (r["titulo"] ?? "").trim() || null,
     };
 
     const existing = map.get(p);
@@ -148,6 +164,8 @@ export interface CxcData {
   factoringMovs: FactoringMovRow[];
   /** Saldo actual de Factoring Banco (negativo = deuda). */
   factoringSaldo: number;
+  /** Líneas de producto por factura (para extraer el Vehículo en Órdenes). */
+  items: ItemRow[];
 }
 
 export interface PagoRow {
@@ -158,7 +176,20 @@ export interface PagoRow {
   montoPago: number;
   balancePendiente: number;
   estadoFactura: string;
+  metodoPago: string;
   idCruce: number | null;
+}
+
+/** Una línea de producto/servicio de una factura (cxc_Items.csv, solo 2026). */
+export interface ItemRow {
+  numeroComprobante: string;
+  fechaFactura: Date | null;
+  idItem: string;
+  nombreProducto: string;
+  descripcion: string;
+  cantidad: number;
+  precio: number;
+  total: number;
 }
 
 /** Movimiento de la cuenta "Factoring Banco" (cxc_FactoringBanco.csv). */
@@ -175,13 +206,14 @@ export interface FactoringMovRow {
  * La fecha de corte ("datos al") se deriva de max(Fecha) del propio CSV.
  */
 export async function loadCxcData(): Promise<CxcData> {
-  const [cxcText, pagosText, calText, factBancoText, factSaldoText] =
+  const [cxcText, pagosText, calText, factBancoText, factSaldoText, itemsText] =
     await Promise.all([
       readCsv("cxc"),
       readCsv("pagos"),
       readCsv("calendario"),
       readCsv("factoringBanco"),
       readCsv("factoringSaldo"),
+      readCsvOpcional("items"),
     ]);
 
   const calRows = parse(calText);
@@ -225,6 +257,8 @@ export async function loadCxcData(): Promise<CxcData> {
       idCruce: id,
       etiqueta: match ? match.etiqueta : null,
       fechaReagendamiento: match ? match.inicio : null,
+      titulo: match ? match.titulo : null,
+      observaciones: (r["Observaciones"] ?? "").trim(),
     });
   }
 
@@ -236,6 +270,7 @@ export async function loadCxcData(): Promise<CxcData> {
     montoPago: toNumberComma(r["MontoPago"]), // cxc_Pagos usa coma decimal
     balancePendiente: toNumberComma(r["BalancePendiente"]),
     estadoFactura: (r["EstadoFactura"] ?? "").trim(),
+    metodoPago: (r["MetodoPago"] ?? "").trim(),
     idCruce: idCruce((r["NumeroComprobante"] ?? "").trim()),
   }));
 
@@ -250,6 +285,20 @@ export async function loadCxcData(): Promise<CxcData> {
   const saldoRows = parse(factSaldoText);
   const factoringSaldo = saldoRows.length ? toNumber(saldoRows[0]["Saldo"]) : 0;
 
+  // Items (líneas de producto). El orden del CSV = orden de los items en la
+  // factura; se preserva para poder elegir el "item principal" (el primero no
+  // excluido) al extraer el Vehículo.
+  const items: ItemRow[] = parse(itemsText).map((r) => ({
+    numeroComprobante: (r["NumeroComprobante"] ?? "").trim(),
+    fechaFactura: parseFecha(r["FechaFactura"]),
+    idItem: (r["IdItem"] ?? "").trim(),
+    nombreProducto: (r["NombreProducto"] ?? "").trim(),
+    descripcion: (r["Descripcion"] ?? "").trim(),
+    cantidad: toNumber(r["Cantidad"]),
+    precio: toNumber(r["Precio"]),
+    total: toNumber(r["Total"]),
+  }));
+
   return {
     cxc,
     pagos,
@@ -257,5 +306,6 @@ export async function loadCxcData(): Promise<CxcData> {
     fechaCorte,
     factoringMovs,
     factoringSaldo,
+    items,
   };
 }

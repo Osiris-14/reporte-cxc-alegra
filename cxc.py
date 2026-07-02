@@ -63,6 +63,25 @@ print("\nColumnas disponibles:")
 print(df.columns.tolist())
 
 # ===============================
+# OBSERVACIONES (notas internas / nota impresa de la factura)
+# ===============================
+# En Alegra la nota impresa ("FACT: 0904 / TRANF / BANCO / COLOR / COTIZACION")
+# vive en "numberTemplate.text" para las facturas recientes. Las antiguas usaban
+# "anotation"/"annotation" (y "observations" siempre llega vacío). Se toma el
+# PRIMER campo con contenido, en orden de prioridad:
+#   1) numberTemplate.text  2) anotation  3) annotation  4) observations
+prioridad = ["numberTemplate.text", "anotation", "annotation", "observations"]
+
+obs = pd.Series([""] * len(df), index=df.index, dtype=object)
+for campo in prioridad:
+    if campo in df.columns:
+        col = df[campo].fillna("").astype(str).str.strip()
+        # Solo rellena donde 'obs' aún está vacío (respeta la prioridad).
+        vacio = obs == ""
+        obs = obs.where(~vacio, col)
+df["Observaciones"] = obs
+
+# ===============================
 # RENOMBRE
 # ===============================
 rename_map = {
@@ -88,7 +107,8 @@ columnas_finales = [
     "Cliente",
     "MontoTotal",
     "BalancePendiente",
-    "Estado"
+    "Estado",
+    "Observaciones"
 ]
 
 columnas_existentes = [c for c in columnas_finales if c in df.columns]

@@ -18,15 +18,17 @@ const TABS = [
 export default function Dashboard({
   dash,
   fechaCorte,
+  renderedAt,
 }: {
   dash: DashboardData;
   fechaCorte: Date;
+  renderedAt?: Date;
 }) {
   const [tab, setTab] = useState(0);
 
   return (
     <div className="app">
-      <Topbar fechaCorte={fechaCorte} active="cxc" />
+      <Topbar fechaCorte={fechaCorte} renderedAt={renderedAt} active="cxc" />
 
       <div className="tabbar">
         {TABS.map((t, i) => (

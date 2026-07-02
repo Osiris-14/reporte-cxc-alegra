@@ -22,6 +22,21 @@ export function diaMesAnio(d: Date | null): string {
   return `${d.getUTCDate()} ${MESES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
+/**
+ * Hora local de República Dominicana (America/Santo_Domingo, UTC-4) en formato
+ * "9:45 AM". Se le pasa el `Date` del momento de render (new Date() en el server
+ * component) para mostrar cuándo se cargó/renderizó la página, no cuándo se
+ * generó el CSV.
+ */
+export function horaRD(d: Date): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Santo_Domingo",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
+}
+
 /** Rango de una semana: "2–8 jun" o "29 jun – 5 jul" si cruza de mes. */
 export function rangoSemana(start: Date, end: Date): string {
   if (start.getUTCMonth() === end.getUTCMonth()) {

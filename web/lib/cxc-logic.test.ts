@@ -24,6 +24,8 @@ function row(partial: Partial<CxcRow>): CxcRow {
     idCruce: 3404,
     etiqueta: null,
     fechaReagendamiento: null,
+    titulo: null,
+    observaciones: "",
     ...partial,
   };
 }
