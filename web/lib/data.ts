@@ -56,6 +56,52 @@ async function readCsv(key: FileKey): Promise<string> {
 }
 
 /**
+ * Fecha del último commit que tocó el CSV de CxC en GitHub = momento real en que
+ * el pipeline actualizó los datos, aunque ese día no se hayan aperturado
+ * facturas nuevas (p. ej. fines de semana). Es la mejor señal de frescura para
+ * el banner "Datos al": max(Fecha) se queda pegado al último día hábil, pero el
+ * pipeline igual corre y refresca saldos/pagos. Devuelve el día-calendario RD
+ * del commit (medianoche UTC, misma convención que hoyRD/parseFecha) o null.
+ *
+ * Solo aplica cuando la fuente es raw GitHub (producción). En dev cae al
+ * fallback max(Fecha). Se revalida cada 10 min para no agotar el rate-limit de
+ * la API de GitHub (60 req/h sin auth); ante cualquier fallo devuelve null.
+ */
+async function fetchFechaCommitRD(): Promise<Date | null> {
+  const forced = process.env.CXC_DATA_SOURCE;
+  const useRaw =
+    forced === "raw" ||
+    (forced !== "fs" && process.env.NODE_ENV === "production");
+  if (!useRaw) return null;
+
+  const url = `https://api.github.com/repos/${REPO}/commits?path=${encodeURIComponent(
+    FILES.cxc,
+  )}&sha=${BRANCH}&per_page=1`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "User-Agent": "reporte-cxc-alegra",
+      },
+      // El commit solo cambia cuando corre el pipeline: cachear 10 min evita
+      // gastar rate-limit sin restarle frescura útil al banner.
+      next: { revalidate: 600 },
+    });
+    if (!res.ok) return null;
+    const arr = (await res.json()) as Array<{
+      commit?: { committer?: { date?: string } };
+    }>;
+    const iso = arr?.[0]?.commit?.committer?.date;
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return hoyRD(d); // día-calendario RD del instante del commit
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Lee un CSV opcional: si aún no existe (p. ej. cxc_Items.csv sin commitear a
  * GitHub todavía), devuelve "" en vez de romper toda la carga. Los consumidores
  * lo tratan como "sin filas".
@@ -206,6 +252,10 @@ export interface FactoringMovRow {
  * La fecha de corte ("datos al") se deriva de max(Fecha) del propio CSV.
  */
 export async function loadCxcData(): Promise<CxcData> {
+  // Arranca en paralelo con la lectura de CSV: fecha real de la última corrida
+  // del pipeline (commit del CSV en GitHub) para el banner "Datos al".
+  const fechaCommitP = fetchFechaCommitRD();
+
   const [cxcText, pagosText, calText, factBancoText, factSaldoText, itemsText] =
     await Promise.all([
       readCsv("cxc"),
@@ -233,7 +283,17 @@ export async function loadCxcData(): Promise<CxcData> {
     const f = parseFecha(r["Fecha"]);
     if (f) corteMs = Math.max(corteMs, f.getTime());
   }
-  const fechaCorte = corteMs ? new Date(corteMs) : hoyRD();
+  const maxFechaCorte = corteMs ? new Date(corteMs) : hoyRD();
+
+  // "Datos al" = la fecha MÁS RECIENTE entre max(Fecha) del CSV y la fecha del
+  // último commit del CSV (= última corrida del pipeline). Así el banner avanza
+  // aunque un día sin facturas nuevas (fin de semana) deje max(Fecha) pegado al
+  // último día hábil. Si el lookup del commit falla, cae a max(Fecha).
+  const fechaCommit = await fechaCommitP;
+  const fechaCorte =
+    fechaCommit && fechaCommit.getTime() > maxFechaCorte.getTime()
+      ? fechaCommit
+      : maxFechaCorte;
 
   const cxc: CxcRow[] = [];
   for (const r of cxcRaw) {
