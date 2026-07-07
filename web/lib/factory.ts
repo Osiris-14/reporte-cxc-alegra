@@ -199,6 +199,8 @@ export interface FactoryData {
   tablaSemana: FactoryRow[];
   meses: MesData[];
   mesActual: number;
+  /** Pagos del año en curso (para la hoja de facturas pagadas). */
+  pagos: PagoRow[];
 }
 
 /** Cálculo por factura: apertura, pagos posteriores y si pagó completo. */
@@ -455,6 +457,11 @@ export function computeFactory(
     });
   }
 
+  // Pagos del año en curso (para la hoja "Facturas pagadas")
+  const pagosAnio = pagos.filter(
+    (p) => p.fechaPago && p.fechaPago.getUTCFullYear() === anio,
+  );
+
   return {
     hoy,
     fondo: computeFondo(factoringMovs, factoringSaldo),
@@ -467,5 +474,6 @@ export function computeFactory(
     tablaSemana,
     meses,
     mesActual: hoy.getUTCMonth(),
+    pagos: pagosAnio,
   };
 }

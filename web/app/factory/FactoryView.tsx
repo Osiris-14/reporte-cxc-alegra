@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import Topbar from "@/components/Topbar";
 import {
   Badge,
@@ -12,7 +12,9 @@ import {
   MesData,
   WeekFactura,
 } from "@/lib/factory";
+import type { PagoRow } from "@/lib/data";
 import { money, diaMes, diaMesAnio, MESES_LARGOS } from "@/lib/format";
+import { inicioSemana, finSemana } from "@/lib/cxc-logic";
 
 function badgeClass(b: Badge): string {
   return b === "g" ? "fb-g" : b === "y" ? "fb-y" : b === "r" ? "fb-r" : "fb-gray";
@@ -504,6 +506,182 @@ function MonthlyTable({ mesData, query }: { mesData: MesData; query: string }) {
   );
 }
 
+function formatDateInput(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
+function PagosFactorySection({ pagos, hoy }: { pagos: PagoRow[]; hoy: Date }) {
+  const [filtro, setFiltro] = useState<"semana" | "mes" | "dias" | null>("semana");
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
+
+  const lunes = useMemo(() => inicioSemana(hoy), [hoy]);
+  const domingo = useMemo(() => finSemana(hoy), [hoy]);
+
+  const primerDiaMes = useMemo(
+    () => new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), 1)),
+    [hoy],
+  );
+  const ultimoDiaMes = useMemo(
+    () => new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth() + 1, 0)),
+    [hoy],
+  );
+
+  const aplicarFiltro = (k: "semana" | "mes" | "dias") => {
+    setFiltro(k);
+    if (k === "semana") {
+      setDesde(formatDateInput(lunes));
+      setHasta(formatDateInput(domingo));
+    } else if (k === "mes") {
+      setDesde(formatDateInput(primerDiaMes));
+      setHasta(formatDateInput(ultimoDiaMes));
+    } else {
+      const sieteDias = new Date(hoy.getTime() - 6 * 86_400_000);
+      setDesde(formatDateInput(sieteDias));
+      setHasta(formatDateInput(hoy));
+    }
+  };
+
+  useEffect(() => {
+    aplicarFiltro("semana");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const alCambiarDesde = (v: string) => {
+    setDesde(v);
+    setFiltro(null);
+  };
+  const alCambiarHasta = (v: string) => {
+    setHasta(v);
+    setFiltro(null);
+  };
+  const limpiarRango = () => {
+    setDesde("");
+    setHasta("");
+    setFiltro(null);
+  };
+
+  const filtrados = useMemo(() => {
+    const desdeMs = desde ? new Date(desde + "T00:00:00Z").getTime() : 0;
+    const hastaMs = hasta
+      ? new Date(hasta + "T23:59:59Z").getTime()
+      : Infinity;
+    return pagos
+      .filter((p) => {
+        if (!p.fechaPago) return false;
+        const t = p.fechaPago.getTime();
+        return t >= desdeMs && t <= hastaMs;
+      })
+      .sort((a, b) => (b.fechaPago?.getTime() ?? 0) - (a.fechaPago?.getTime() ?? 0));
+  }, [pagos, desde, hasta]);
+
+  const total = filtrados.reduce((s, p) => s + p.montoPago, 0);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="section-label">
+        <i className="ti ti-credit-card" aria-hidden="true" />
+        Facturas pagadas
+      </div>
+
+      <div className="ord-toolbar">
+        <div className="month-tabs">
+          {(["semana", "mes", "dias"] as const).map((k) => (
+            <button
+              key={k}
+              className={`month-tab ${filtro === k ? "month-tab-active" : ""}`}
+              onClick={() => aplicarFiltro(k)}
+            >
+              {k === "semana" ? "Semana" : k === "mes" ? "Mes" : "Últimos 7 días"}
+            </button>
+          ))}
+        </div>
+
+        <div className={`ord-range ${filtro === null ? "ord-range-active" : ""}`}>
+          <label className="ord-range-field">
+            <span>Desde</span>
+            <input
+              type="date"
+              value={desde}
+              max={hasta || undefined}
+              onChange={(e) => alCambiarDesde(e.target.value)}
+            />
+          </label>
+          <label className="ord-range-field">
+            <span>Hasta</span>
+            <input
+              type="date"
+              value={hasta}
+              min={desde || undefined}
+              onChange={(e) => alCambiarHasta(e.target.value)}
+            />
+          </label>
+          {(desde || hasta) && (
+            <button
+              className="ord-range-clear"
+              onClick={limpiarRango}
+              aria-label="Limpiar filtro de fechas"
+              title="Limpiar filtro de fechas"
+            >
+              <i className="ti ti-x" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {filtro === null && (desde || hasta) && (
+        <div className="ord-range-note">
+          Rango: {desde ? diaMesAnio(new Date(desde + "T00:00:00Z")) : "—"} —{" "}
+          {hasta ? diaMesAnio(new Date(hasta + "T00:00:00Z")) : "—"} ·{" "}
+          {filtrados.length} {filtrados.length === 1 ? "pago" : "pagos"}
+        </div>
+      )}
+
+      <div className="card">
+        <div className="card-head">
+          <div className="cdot" style={{ background: "#3aa76d" }} />
+          <span className="card-title">Pagos</span>
+          <span className="card-badge p-grn">{filtrados.length}</span>
+        </div>
+        <table className="tb-full tb-stack">
+          <thead>
+            <tr>
+              <th style={{ width: "22%" }}>NCF</th>
+              <th style={{ width: "34%" }}>Cliente</th>
+              <th className="a-c" style={{ width: "18%" }}>Fecha pago</th>
+              <th className="a-l" style={{ width: "26%" }}>Monto pagado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtrados.length === 0 && (
+              <tr className="empty-row">
+                <td colSpan={4}>Sin pagos en este período</td>
+              </tr>
+            )}
+            {filtrados.map((p) => (
+              <tr key={`${p.numeroComprobante}-${p.fechaPago?.getTime() ?? 0}-${p.montoPago}`}>
+                <td data-label="NCF">{p.numeroComprobante}</td>
+                <td className="client-cell" data-label="Cliente">{p.cliente || "—"}</td>
+                <td className="a-c" data-label="Fecha pago">{diaMes(p.fechaPago)}</td>
+                <td className="a-l" data-label="Monto pagado" style={{ color: "#1a7a44", fontWeight: 600 }}>{money(p.montoPago)}</td>
+              </tr>
+            ))}
+            {filtrados.length > 0 && (
+              <tr className="total-row">
+                <td colSpan={3}>Total cobrado</td>
+                <td className="a-l" style={{ color: "#1a7a44" }}>{money(total)}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function FactoryView({
   data,
   fechaCorte,
@@ -630,6 +808,10 @@ export default function FactoryView({
           )}
         </div>
         <MonthlyTable mesData={mesData} query={query} />
+
+        <hr style={{ border: "none", borderTop: "0.5px solid #e3e3e3", margin: "6px 0" }} />
+
+        <PagosFactorySection pagos={data.pagos} hoy={data.hoy} />
       </div>
     </div>
   );
