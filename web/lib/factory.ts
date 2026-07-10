@@ -28,6 +28,7 @@ import { rangoSemana } from "./format";
 
 const DAY = 86_400_000;
 const UMBRAL_APERTURA = 300;
+const UMBRAL_MAX_FACTORIZABLE = 100_000;
 const ITBIS = 1.06;
 
 // --- Fondo Carryon -------------------------------------------------------
@@ -199,6 +200,10 @@ export interface FactoryData {
   tablaSemana: FactoryRow[];
   meses: MesData[];
   mesActual: number;
+  /** Facturas excluidas por pendienteInicial >= 100,000 en el mes actual. */
+  excluidasMes: number;
+  /** Facturas excluidas por pendienteInicial >= 100,000 en todo el año. */
+  excluidasTotal: number;
   /** Pagos del año en curso (para la hoja de facturas pagadas). */
   pagos: PagoRow[];
 }
@@ -274,7 +279,9 @@ export function calcFactura(row: CxcRow, pagos: PagoRow[]): FCalc {
     pendienteInicial,
     heRecibido: posterior * ITBIS,
     pagoCompleto: row.balancePendiente <= UMBRAL_APERTURA,
-    activa: pendienteInicial > UMBRAL_APERTURA,
+    activa:
+      pendienteInicial > UMBRAL_APERTURA &&
+      pendienteInicial < UMBRAL_MAX_FACTORIZABLE,
   };
 }
 
@@ -316,6 +323,18 @@ export function computeFactory(
     calcFactura(r, pagosByComp.get(r.numeroComprobante) ?? []),
   );
   const activas = calc.filter((c) => c.activa);
+
+  // Facturas excluidas por el filtro de pendienteInicial >= 100,000
+  // (que sí superan el umbral de apertura de 300).
+  const excluidas = calc.filter(
+    (c) => c.pendienteInicial > UMBRAL_APERTURA && c.pendienteInicial >= UMBRAL_MAX_FACTORIZABLE,
+  );
+  const excluidasMes = excluidas.filter(
+    (c) =>
+      c.fechaApertura != null &&
+      c.fechaApertura.getUTCFullYear() === anio &&
+      c.fechaApertura.getUTCMonth() === hoy.getUTCMonth(),
+  );
 
   // "Monto esperado" / "Entregué" = pendienteInicial (MontoTotal − pago inicial).
   // NO usar BalancePendiente: ese ya descuenta los pagos posteriores y queda en 0
@@ -474,6 +493,8 @@ export function computeFactory(
     tablaSemana,
     meses,
     mesActual: hoy.getUTCMonth(),
+    excluidasMes: excluidasMes.length,
+    excluidasTotal: excluidas.length,
     pagos: pagosAnio,
   };
 }

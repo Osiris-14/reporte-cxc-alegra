@@ -766,6 +766,13 @@ export default function FactoryView({
           />
         </div>
 
+        {/* Facturas excluidas por monto >= $100,000 */}
+        <div style={{ fontSize: 12, color: "#888", marginTop: -8, marginBottom: 8 }}>
+          Facturas NO factorizables (pendiente ≥ $100,000) excluidas:{" "}
+          <strong>{data.excluidasMes}</strong> este mes ·{" "}
+          <strong>{data.excluidasTotal}</strong> en total
+        </div>
+
         {/* Sección 2 — dos tablas */}
         <div className="two-col two-col-even">
           <AperturasTable title="Aperturas de hoy" color="#3aa76d" rows={data.tablaHoy} />
