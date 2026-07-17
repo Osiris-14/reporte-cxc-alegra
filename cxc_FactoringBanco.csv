@@ -1,8 +1,9 @@
 ﻿Fecha,Tercero,CuentaContable,Tipo,Conciliado,Valor
 2026-07-16,Transferencias bancarias,Transferencias bancarias,Entrada,No,25823.0
+2026-07-15,Transferencias bancarias,Transferencias bancarias,Entrada,No,8500.0
+2026-07-11,Transferencias bancarias,Transferencias bancarias,Entrada,No,10075.0
 2026-07-11,Transferencias bancarias,Transferencias bancarias,Entrada,No,14850.0
 2026-07-11,Transferencias bancarias,Transferencias bancarias,Entrada,No,9500.0
-2026-07-11,Transferencias bancarias,Transferencias bancarias,Entrada,No,10075.0
 2026-07-10,Transferencias bancarias,Transferencias bancarias,Entrada,No,14500.0
 2026-07-09,Transferencias bancarias,Transferencias bancarias,Entrada,No,13875.0
 2026-07-09,Transferencias bancarias,Transferencias bancarias,Entrada,No,49730.0
@@ -70,9 +71,9 @@
 2026-05-15,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,14045.0
 2026-05-14,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,63223.7
 2026-05-12,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,33629.56
-2026-05-11,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,27500.0
-2026-05-11,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,1219.0
 2026-05-11,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,7133.38
+2026-05-11,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,1219.0
+2026-05-11,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,27500.0
 2026-05-09,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,15900.0
 2026-05-09,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,18921.0
 2026-05-08,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,35107.0
@@ -82,8 +83,8 @@
 2026-05-05,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,9540.0
 2026-05-02,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,18427.14
 2026-05-01,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,71603.0
-2026-04-28,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,32642.51
 2026-04-28,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,1200.0
+2026-04-28,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,32642.51
 2026-04-27,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,29000.0
 2026-04-25,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,56747.77
 2026-04-25,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,16391.32
@@ -111,8 +112,8 @@
 2026-04-07,Transferencias bancarias,Transferencias bancarias,Salida,Sí,-15000.0
 2026-04-07,Transferencias bancarias,Transferencias bancarias,Salida,Sí,-7970.0
 2026-04-07,Transferencias bancarias,Transferencias bancarias,Salida,Sí,-11375.0
-2026-04-07,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,30000.0
 2026-04-07,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,109820.0
+2026-04-07,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,30000.0
 2026-04-06,Transferencias bancarias,Transferencias bancarias,Entrada,Sí,16000.0
 2026-04-06,Transferencias bancarias,Transferencias bancarias,Salida,Sí,-10000.0
 2026-04-06,Transferencias bancarias,Transferencias bancarias,Salida,Sí,-50000.0
