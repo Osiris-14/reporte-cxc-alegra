@@ -198,6 +198,7 @@ export interface FactoryData {
   totalEntregarSabado: number;
   totalEntregadoSemanaPasada: number;
   entregadoSemanaPasadaCount: number;
+  tablaSemanaPasada: FactoryRow[];
   tablaHoy: FactoryRow[];
   tablaSemana: FactoryRow[];
   meses: MesData[];
@@ -371,6 +372,9 @@ export function computeFactory(
     inRange(c.fechaApertura, lunesPasado, domingoPasado),
   );
   const totalEntregadoSemanaPasada = sumPend(aperturasSemanaPasada);
+  const tablaSemanaPasada = aperturasSemanaPasada
+    .map(toRow)
+    .sort((a, b) => b.montoPendiente - a.montoPendiente);
 
   const tablaHoy = aperturasHoy
     .map(toRow)
@@ -501,6 +505,7 @@ export function computeFactory(
     totalEntregarSabado: aperturasSemanaMonto,
     totalEntregadoSemanaPasada,
     entregadoSemanaPasadaCount: aperturasSemanaPasada.length,
+    tablaSemanaPasada,
     tablaHoy,
     tablaSemana,
     meses,

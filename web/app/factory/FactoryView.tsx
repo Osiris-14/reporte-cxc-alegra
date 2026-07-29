@@ -692,6 +692,7 @@ export default function FactoryView({
   renderedAt?: Date;
 }) {
   const [mes, setMes] = useState(data.mesActual);
+  const [semPasadaOpen, setSemPasadaOpen] = useState(false);
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
 
@@ -763,6 +764,8 @@ export default function FactoryView({
             numColor="#2a7d96"
             num={money(data.totalEntregadoSemanaPasada)}
             delta={`${data.entregadoSemanaPasadaCount} aperturas · semana pasada`}
+            onClick={() => setSemPasadaOpen((v) => !v)}
+            expanded={semPasadaOpen}
           />
           <MetricCard
             label={`Aperturas este mes (${MESES_LARGOS[mes]})`}
@@ -774,6 +777,14 @@ export default function FactoryView({
             delta={`${money(mesData.total.entregue)} esperado`}
           />
         </div>
+
+        {semPasadaOpen && (
+          <AperturasTable
+            title="Entregado la semana pasada"
+            color="#2a7d96"
+            rows={data.tablaSemanaPasada}
+          />
+        )}
 
         {/* Facturas excluidas por monto >= $100,000 */}
         <div className="fac-excluidas">
