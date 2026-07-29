@@ -51,6 +51,7 @@ export default function ResumenView({
   onTab: (n: number) => void;
 }) {
   const [semOpen, setSemOpen] = useState(false);
+  const [semPasadaOpen, setSemPasadaOpen] = useState(false);
   return (
     <div className="view">
       <div className="section-label">Indicadores de cartera</div>
@@ -179,6 +180,79 @@ export default function ResumenView({
                   <td colSpan={3}>Total ({dash.cobradoSemanaCount})</td>
                   <td className="a-l" style={{ color: "#1a7a44" }}>
                     {money(dash.cobradoSemana)}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div
+        className={`metric metric-clickable${semPasadaOpen ? " metric-open" : ""}`}
+        onClick={() => setSemPasadaOpen((v) => !v)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setSemPasadaOpen((v) => !v);
+          }
+        }}
+      >
+        <div className="m-top">
+          <span className="m-lbl">
+            <i
+              className={`ti ti-chevron-${semPasadaOpen ? "down" : "right"}`}
+              style={{ fontSize: 11, marginRight: 3, verticalAlign: "middle" }}
+              aria-hidden="true"
+            />
+            Cobrado semana pasada
+          </span>
+          <div className="m-ico" style={{ background: "#eafaf0", color: "#1a7a44" }}>
+            <i className="ti ti-calendar-check" aria-hidden="true" />
+          </div>
+        </div>
+        <div className="m-num" style={{ color: "#1a7a44" }}>
+          {money(dash.cobradoSemanaPasada)}
+        </div>
+        <div className="m-delta" style={{ color: "#999" }}>
+          {dash.cobradoSemanaPasadaCount} instalaciones · semana pasada
+        </div>
+      </div>
+
+      {semPasadaOpen && (
+        <div className="fondo-drill">
+          <table className="tb-full drill tb-stack">
+            <thead>
+              <tr>
+                <th style={{ width: "22%" }}>NCF</th>
+                <th style={{ width: "40%" }}>Cliente</th>
+                <th className="a-c" style={{ width: "18%" }}>Fecha de pago</th>
+                <th className="a-l" style={{ width: "20%" }}>Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dash.cobradoSemanaPasadaRows.length === 0 && (
+                <tr className="empty-row">
+                  <td colSpan={4}>Sin cobros la semana pasada</td>
+                </tr>
+              )}
+              {dash.cobradoSemanaPasadaRows.map((r) => (
+                <tr key={r.comprobante}>
+                  <td data-label="NCF">{r.comprobante}</td>
+                  <td className="client-cell" data-label="Cliente">{r.cliente}</td>
+                  <td className="muted a-c" data-label="Fecha de pago">
+                    {diaMesAnio(r.fechaPago)}
+                  </td>
+                  <td className="a-l" data-label="Monto">{money(r.monto)}</td>
+                </tr>
+              ))}
+              {dash.cobradoSemanaPasadaRows.length > 0 && (
+                <tr className="total-row">
+                  <td colSpan={3}>Total ({dash.cobradoSemanaPasadaCount})</td>
+                  <td className="a-l" style={{ color: "#1a7a44" }}>
+                    {money(dash.cobradoSemanaPasada)}
                   </td>
                 </tr>
               )}

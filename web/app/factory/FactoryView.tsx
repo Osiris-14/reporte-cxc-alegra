@@ -767,7 +767,7 @@ export default function FactoryView({
         </div>
 
         {/* Facturas excluidas por monto >= $100,000 */}
-        <div style={{ fontSize: 12, color: "#888", marginTop: -8, marginBottom: 8 }}>
+        <div className="fac-excluidas">
           Facturas NO factorizables (pendiente ≥ $100,000) excluidas:{" "}
           <strong>{data.excluidasMes}</strong> este mes ·{" "}
           <strong>{data.excluidasTotal}</strong> en total

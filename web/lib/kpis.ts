@@ -89,6 +89,11 @@ export interface Dashboard {
   cobradoSemana: number;
   cobradoSemanaCount: number;
   cobradoSemanaRows: CobradoSemanaRow[];
+  /** "Cobrado semana pasada": misma lógica que cobradoSemana pero para la
+   *  semana anterior (lunes a domingo previos). */
+  cobradoSemanaPasada: number;
+  cobradoSemanaPasadaCount: number;
+  cobradoSemanaPasadaRows: CobradoSemanaRow[];
   diasPromAtraso: number;
   concentracionPct: number;
   topDeudorNombre: string;
@@ -309,6 +314,49 @@ export function computeDashboard(
     .sort((a, b) => b.monto - a.monto);
   const cobradoSemana = cobradoSemanaRows.reduce((a, r) => a + r.monto, 0);
 
+  // "Cobrado semana pasada" — misma lógica que cobradoSemana pero para la
+  // semana anterior (lunes a domingo previos).
+  const lunesPasado = new Date(lunes.getTime() - 7 * 86_400_000);
+  const domingoPasado = new Date(domingo.getTime() - 7 * 86_400_000);
+  const enSemanaPasada = (d: Date | null) =>
+    d !== null && d.getTime() >= lunesPasado.getTime() && d.getTime() <= domingoPasado.getTime();
+
+  const cobradoSemanaPasadaMap = new Map<
+    string,
+    { cliente: string; monto: number; fechaPago: Date | null }
+  >();
+  for (const d of pagos) {
+    const c = cxcMap.get(d.numeroComprobante);
+    if (!c) continue;
+    const califica =
+      enSemanaPasada(d.fechaPago) &&
+      d.balancePendiente < UMBRAL_PAGADO &&
+      (enSemanaPasada(c.fechaVencimiento) || enSemanaPasada(c.fechaReagendamiento));
+    if (!califica) continue;
+    const cur = cobradoSemanaPasadaMap.get(d.numeroComprobante) ?? {
+      cliente: d.cliente || c.cliente || "—",
+      monto: 0,
+      fechaPago: null as Date | null,
+    };
+    cur.monto += d.montoPago;
+    if (
+      d.fechaPago &&
+      (cur.fechaPago === null || d.fechaPago.getTime() > cur.fechaPago.getTime())
+    ) {
+      cur.fechaPago = d.fechaPago;
+    }
+    cobradoSemanaPasadaMap.set(d.numeroComprobante, cur);
+  }
+  const cobradoSemanaPasadaRows: CobradoSemanaRow[] = [...cobradoSemanaPasadaMap.entries()]
+    .map(([comprobante, v]) => ({
+      comprobante,
+      cliente: v.cliente,
+      fechaPago: v.fechaPago,
+      monto: v.monto,
+    }))
+    .sort((a, b) => b.monto - a.monto);
+  const cobradoSemanaPasada = cobradoSemanaPasadaRows.reduce((a, r) => a + r.monto, 0);
+
   // --- Días promedio de atraso (cuentas en atraso, desde febrero) ---
   const enAtraso = withState.filter((x) => x.ec === "Atraso" && desdeFeb(x.row));
   const diasPromAtraso =
@@ -458,6 +506,9 @@ export function computeDashboard(
     cobradoSemana,
     cobradoSemanaCount: cobradoSemanaRows.length,
     cobradoSemanaRows,
+    cobradoSemanaPasada,
+    cobradoSemanaPasadaCount: cobradoSemanaPasadaRows.length,
+    cobradoSemanaPasadaRows,
     diasPromAtraso,
     concentracionPct,
     topDeudorNombre,

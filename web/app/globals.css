@@ -768,10 +768,32 @@ body {
     align-items: stretch;
   }
   .ord-range {
-    justify-content: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .ord-range-field {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  .ord-range-field span {
+    flex: 0 0 auto;
+    width: 48px;
   }
   .ord-range-field input {
     flex: 1;
+    height: 36px;
+    font-size: 13px;
+  }
+  .ord-range-clear {
+    align-self: flex-end;
+    height: 36px;
+    width: 36px;
+  }
+  .ord-toolbar .month-tab {
+    min-height: 40px;
+    font-size: 11px;
   }
 }
 
@@ -836,6 +858,22 @@ body {
 .fac-clear:hover {
   background: #e6e6e6;
   color: #555;
+}
+
+/* Factory — info de facturas excluidas */
+.fac-excluidas {
+  font-size: 12px;
+  color: #888;
+  margin-top: -8px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+@media (max-width: 767px) {
+  .fac-excluidas {
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
 }
 
 /* Factory — badges (verde/amarillo/rojo/gris) */
@@ -1318,6 +1356,47 @@ body {
 
   .tb-stack.drill tr:last-child {
     border-bottom: none;
+  }
+
+  /* Factory — buscador ancho completo en móvil */
+  .fac-search {
+    max-width: 100%;
+  }
+
+  .fac-search input {
+    font-size: 14px;
+    height: 42px;
+  }
+
+  /* Factory — mes tabs más compactos y táctiles */
+  .month-tab {
+    padding: 6px 11px;
+    font-size: 10px;
+  }
+
+  /* Factory — Fondo Carryon cards más compactas */
+  .fondo-box {
+    padding: 10px;
+  }
+
+  .fondo-box .metric-row {
+    gap: 6px;
+  }
+
+  .fondo-box .metric {
+    padding: 10px 12px;
+  }
+
+  /* Factory — Aperturas tables: botón/badge más táctil */
+  .card-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+
+  /* PagosFactorySection — tabs de filtro más táctiles */
+  .ord-toolbar .month-tab {
+    min-height: 40px;
+    font-size: 11px;
   }
 }
 
