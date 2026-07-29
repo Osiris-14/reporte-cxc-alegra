@@ -756,6 +756,15 @@ export default function FactoryView({
             delta="monto esperado de la semana"
           />
           <MetricCard
+            label="Entregado la semana pasada"
+            icon="ti-calendar-stats"
+            bg="#e9f4f8"
+            color="#2a7d96"
+            numColor="#2a7d96"
+            num={money(data.totalEntregadoSemanaPasada)}
+            delta={`${data.entregadoSemanaPasadaCount} aperturas · semana pasada`}
+          />
+          <MetricCard
             label={`Aperturas este mes (${MESES_LARGOS[mes]})`}
             icon="ti-calendar-month"
             bg="#f0eeff"

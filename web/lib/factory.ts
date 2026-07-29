@@ -196,6 +196,8 @@ export interface FactoryData {
   aperturasSemanaCount: number;
   aperturasSemanaMonto: number;
   totalEntregarSabado: number;
+  totalEntregadoSemanaPasada: number;
+  entregadoSemanaPasadaCount: number;
   tablaHoy: FactoryRow[];
   tablaSemana: FactoryRow[];
   meses: MesData[];
@@ -362,6 +364,14 @@ export function computeFactory(
   );
   const aperturasSemanaMonto = sumPend(aperturasSemana);
 
+  // "Entregado la semana pasada": aperturas de la semana anterior (lunes a domingo previos).
+  const lunesPasado = new Date(lunes.getTime() - 7 * DAY);
+  const domingoPasado = new Date(lunes.getTime() - 1);
+  const aperturasSemanaPasada = activas.filter((c) =>
+    inRange(c.fechaApertura, lunesPasado, domingoPasado),
+  );
+  const totalEntregadoSemanaPasada = sumPend(aperturasSemanaPasada);
+
   const tablaHoy = aperturasHoy
     .map(toRow)
     .sort((a, b) => b.montoPendiente - a.montoPendiente);
@@ -489,6 +499,8 @@ export function computeFactory(
     aperturasSemanaCount: aperturasSemana.length,
     aperturasSemanaMonto,
     totalEntregarSabado: aperturasSemanaMonto,
+    totalEntregadoSemanaPasada,
+    entregadoSemanaPasadaCount: aperturasSemanaPasada.length,
     tablaHoy,
     tablaSemana,
     meses,
