@@ -692,6 +692,8 @@ export default function FactoryView({
   renderedAt?: Date;
 }) {
   const [mes, setMes] = useState(data.mesActual);
+  const [hoyOpen, setHoyOpen] = useState(false);
+  const [semanaOpen, setSemanaOpen] = useState(false);
   const [semPasadaOpen, setSemPasadaOpen] = useState(false);
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
@@ -738,6 +740,8 @@ export default function FactoryView({
             color="#1a7a44"
             num={data.aperturasHoyCount}
             delta={`${money(data.aperturasHoyMonto)} esperado`}
+            onClick={() => setHoyOpen((v) => !v)}
+            expanded={hoyOpen}
           />
           <MetricCard
             label="Aperturas esta semana"
@@ -746,6 +750,8 @@ export default function FactoryView({
             color="#2a7d96"
             num={data.aperturasSemanaCount}
             delta={`${money(data.aperturasSemanaMonto)} esperado`}
+            onClick={() => setSemanaOpen((v) => !v)}
+            expanded={semanaOpen}
           />
           <MetricCard
             label="Total a entregar sábado"
@@ -778,6 +784,12 @@ export default function FactoryView({
           />
         </div>
 
+        {hoyOpen && (
+          <AperturasTable title="Aperturas de hoy" color="#3aa76d" rows={data.tablaHoy} />
+        )}
+        {semanaOpen && (
+          <AperturasTable title="Aperturas esta semana" color="#5bb8d4" rows={data.tablaSemana} />
+        )}
         {semPasadaOpen && (
           <AperturasTable
             title="Entregado la semana pasada"
@@ -791,16 +803,6 @@ export default function FactoryView({
           Facturas NO factorizables (pendiente ≥ $100,000) excluidas:{" "}
           <strong>{data.excluidasMes}</strong> este mes ·{" "}
           <strong>{data.excluidasTotal}</strong> en total
-        </div>
-
-        {/* Sección 2 — dos tablas */}
-        <div className="two-col two-col-even">
-          <AperturasTable title="Aperturas de hoy" color="#3aa76d" rows={data.tablaHoy} />
-          <AperturasTable
-            title="Aperturas esta semana"
-            color="#5bb8d4"
-            rows={data.tablaSemana}
-          />
         </div>
 
         {/* Sección 3 — seguimiento mensual por semana */}
