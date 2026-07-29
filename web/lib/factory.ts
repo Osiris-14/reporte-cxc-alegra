@@ -353,7 +353,7 @@ export function computeFactory(
   const toRow = (c: FCalc): FactoryRow => ({
     comprobante: c.row.numeroComprobante,
     cliente: c.row.cliente || "—",
-    montoPendiente: balancePend(c),
+    montoPendiente: c.pendienteInicial,
     fecha: c.fechaApertura,
   });
 
