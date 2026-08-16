@@ -4,8 +4,10 @@ import {
   estadoAgenda,
   estadoCuenta,
   estadoVencimiento,
+  esFactorizable,
   idCruce,
   pendienteLIT,
+  pendienteInicial,
   parseFecha,
 } from "./cxc-logic";
 
@@ -40,6 +42,49 @@ describe("idCruce", () => {
 describe("pendienteLIT", () => {
   it("aplica el 6% de ITBIS", () => {
     expect(pendienteLIT({ balancePendiente: 1000 })).toBeCloseTo(1060);
+  });
+});
+
+describe("esFactorizable (regla única apertura factory)", () => {
+  const f = (montoTotal: number, fecha?: string) =>
+    row({
+      montoTotal,
+      balancePendiente: montoTotal,
+      fecha: fecha ? d(fecha) : d("2026-08-12"),
+    });
+
+  it("TRUE para apertura < $100,000 (ej. factorizable)", () => {
+    expect(esFactorizable(f(99_999, "2026-08-12"), [])).toBe(true);
+  });
+  it("FALSE para apertura >= $100,000 (B0200003631 $119,357)", () => {
+    expect(esFactorizable(f(119_357, "2026-08-12"), [])).toBe(false);
+  });
+  it("FALSE para apertura exacta de $100,000", () => {
+    expect(esFactorizable(f(100_000, "2026-08-12"), [])).toBe(false);
+  });
+  it("FALSE para apertura <= $300 (ya pagada/apartada)", () => {
+    expect(esFactorizable(f(300, "2026-08-12"), [])).toBe(false);
+  });
+  it("resta el pago inicial del mismo día de la factura", () => {
+    // monto 119,357 con pago inicial de 20,000 -> apertura 99,357 -> SI factorizable
+    expect(
+      esFactorizable(f(119_357, "2026-08-12"), [
+        { fechaPago: d("2026-08-12"), montoPago: 20_000 },
+      ]),
+    ).toBe(true);
+  });
+});
+
+describe("pendienteInicial", () => {
+  it("usa BalancePendiente si un pago precede a la creación (error de captura)", () => {
+    const r = row({
+      fecha: d("2026-08-12"),
+      montoTotal: 50_000,
+      balancePendiente: 40_000,
+    });
+    expect(
+      pendienteInicial(r, [{ fechaPago: d("2026-08-10"), montoPago: 10_000 }]),
+    ).toBe(40_000);
   });
 });
 

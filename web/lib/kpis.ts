@@ -6,8 +6,10 @@
 import {
   CxcRow,
   EstadoAgenda,
+  ITBIS,
   UMBRAL_PAGADO,
   diffDias,
+  esFactorizable,
   estadoAgenda,
   estadoCuenta,
   estadoVencimiento,
@@ -42,6 +44,10 @@ export interface CobradoSemanaRow {
   fechaPago: Date | null;
   /** Monto cobrado = SUM(MontoPago) de los pagos que califican en la semana. */
   monto: number;
+  /** Monto factory = monto * 1.06 (lo que hay que entregar a Factory). */
+  montoFactory: number;
+  /** 6% extraído = montoFactory − monto, comisión/ITBIS de Factory. */
+  extraido: number;
 }
 
 export interface StatusPill {
@@ -89,11 +95,15 @@ export interface Dashboard {
   cobradoSemana: number;
   cobradoSemanaCount: number;
   cobradoSemanaRows: CobradoSemanaRow[];
+  /** "Cobrado esta semana" con el 6% de Factory incluido (total a entregar). */
+  cobradoSemanaFactory: number;
   /** "Cobrado semana pasada": misma lógica que cobradoSemana pero para la
    *  semana anterior (lunes a domingo previos). */
   cobradoSemanaPasada: number;
   cobradoSemanaPasadaCount: number;
   cobradoSemanaPasadaRows: CobradoSemanaRow[];
+  /** "Cobrado semana pasada" con el 6% de Factory incluido (total a entregar). */
+  cobradoSemanaPasadaFactory: number;
   diasPromAtraso: number;
   concentracionPct: number;
   topDeudorNombre: string;
@@ -237,6 +247,20 @@ export function computeDashboard(
   const mismaFecha = (a: Date | null, b: Date) =>
     a !== null && a.getTime() === b.getTime();
 
+  // Pagos por comprobante (para la regla de factorizabilidad de apertura):
+  // "cobrado esta semana" solo debe listar facturas factorizables, es decir con
+  // apertura (pendiente inicial) entre 300 y < $100,000 — la regla única en
+  // cxc-logic.esFactorizable. Facturas de $100,000+ quedan FUERA (no son
+  // factorizables y por ley la apertura excede el monto máximo).
+  const pagosByComp = new Map<string, PagoRow[]>();
+  for (const p of pagos) {
+    const arr = pagosByComp.get(p.numeroComprobante) ?? [];
+    arr.push(p);
+    pagosByComp.set(p.numeroComprobante, arr);
+  }
+  const factorizable = (c: CxcRow) =>
+    esFactorizable(c, pagosByComp.get(c.numeroComprobante) ?? []);
+
   // Agrupa los pagos que califican por comprobante (suma MontoPago, guarda cliente).
   const pagadasMap = new Map<string, { cliente: string; monto: number }>();
   for (const d of pagos) {
@@ -272,6 +296,7 @@ export function computeDashboard(
   // fecha pasa de "hoy" a "la semana en curso" (lunes a domingo):
   //   FechaPago ∈ semana  &&  BalancePendiente(detalle) < 450  &&
   //   (cxc.FechaVencimiento ∈ semana  ||  cxc.FechaReagendamiento ∈ semana)
+  // Extra: SOLO facturas factorizables (apertura < $100,000) — ver regla única.
   const lunes = inicioSemana(hoy);
   const domingo = finSemana(hoy);
   const enSemana = (d: Date | null) =>
@@ -284,6 +309,7 @@ export function computeDashboard(
   for (const d of pagos) {
     const c = cxcMap.get(d.numeroComprobante);
     if (!c) continue;
+    if (!factorizable(c)) continue; // excluye facturas >= $100,000
     const califica =
       enSemana(d.fechaPago) &&
       d.balancePendiente < UMBRAL_PAGADO &&
@@ -310,9 +336,15 @@ export function computeDashboard(
       cliente: v.cliente,
       fechaPago: v.fechaPago,
       monto: v.monto,
+      montoFactory: v.monto * ITBIS,
+      extraido: v.monto * (ITBIS - 1),
     }))
     .sort((a, b) => b.monto - a.monto);
   const cobradoSemana = cobradoSemanaRows.reduce((a, r) => a + r.monto, 0);
+  const cobradoSemanaFactory = cobradoSemanaRows.reduce(
+    (a, r) => a + r.montoFactory,
+    0,
+  );
 
   // "Cobrado semana pasada" — misma lógica que cobradoSemana pero para la
   // semana anterior (lunes a domingo previos).
@@ -328,6 +360,7 @@ export function computeDashboard(
   for (const d of pagos) {
     const c = cxcMap.get(d.numeroComprobante);
     if (!c) continue;
+    if (!factorizable(c)) continue; // excluye facturas >= $100,000
     const califica =
       enSemanaPasada(d.fechaPago) &&
       d.balancePendiente < UMBRAL_PAGADO &&
@@ -353,9 +386,15 @@ export function computeDashboard(
       cliente: v.cliente,
       fechaPago: v.fechaPago,
       monto: v.monto,
+      montoFactory: v.monto * ITBIS,
+      extraido: v.monto * (ITBIS - 1),
     }))
     .sort((a, b) => b.monto - a.monto);
   const cobradoSemanaPasada = cobradoSemanaPasadaRows.reduce((a, r) => a + r.monto, 0);
+  const cobradoSemanaPasadaFactory = cobradoSemanaPasadaRows.reduce(
+    (a, r) => a + r.montoFactory,
+    0,
+  );
 
   // --- Días promedio de atraso (cuentas en atraso, desde febrero) ---
   const enAtraso = withState.filter((x) => x.ec === "Atraso" && desdeFeb(x.row));
@@ -506,9 +545,11 @@ export function computeDashboard(
     cobradoSemana,
     cobradoSemanaCount: cobradoSemanaRows.length,
     cobradoSemanaRows,
+    cobradoSemanaFactory,
     cobradoSemanaPasada,
     cobradoSemanaPasadaCount: cobradoSemanaPasadaRows.length,
     cobradoSemanaPasadaRows,
+    cobradoSemanaPasadaFactory,
     diasPromAtraso,
     concentracionPct,
     topDeudorNombre,

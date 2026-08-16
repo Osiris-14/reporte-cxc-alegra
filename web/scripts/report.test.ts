@@ -19,6 +19,7 @@ it("imprime KPIs reales", async () => {
   L.push(`\n--- Metric cards (Resumen) ---`);
   L.push(`Cartera total:      ${money(d.carteraTotal)}  (${d.carteraComprobantes} comprobantes)`);
   L.push(`Cobrado:            ${money(d.cobrado)}  (${d.cobradoCount} instalaciones)`);
+  L.push(`Entregar Factory (semana): ${money(d.cobradoSemanaFactory)}  (cobrado ${money(d.cobradoSemana)})`);
   L.push(`Días prom. atraso:  ${d.diasPromAtraso}`);
   L.push(`Concentración top:  ${d.concentracionPct}%  (${d.topDeudorNombre})`);
   L.push(`\n--- Status pills ---`);
@@ -33,6 +34,12 @@ it("imprime KPIs reales", async () => {
   L.push(`Instalaciones pagadas: ${d.pagadas.length}  |  total: ${money(d.pagadasTotal)}  ticket prom: ${money(d.pagadasTicketProm)}  mayor: ${money(d.pagadasMayor)} (${d.pagadasMayorCliente})`);
   for (const p of d.pagadas)
     L.push(`  ${p.comprobante}  ${p.cliente.padEnd(28)} ${money(p.montoTotal)}`);
+  L.push(`\n--- Cobrado esta semana (con 6% Factory) ---`);
+  for (const r of d.cobradoSemanaRows)
+    L.push(`  ${r.comprobante}  ${r.cliente.padEnd(28)} cobrado ${money(r.monto)}  factory ${money(r.montoFactory)}  +6% ${money(r.extraido)}`);
+  L.push(`\n--- Cobrado semana pasada (con 6% Factory) ---`);
+  for (const r of d.cobradoSemanaPasadaRows)
+    L.push(`  ${r.comprobante}  ${r.cliente.padEnd(28)} cobrado ${money(r.monto)}  factory ${money(r.montoFactory)}  +6% ${money(r.extraido)}`);
   L.push(`\n--- Alertas reagendados (${d.alertasReag.length}) ---`);
   for (const a of d.alertasReag)
     L.push(`  [${a.nivel}] ${a.cliente} — ${diaMesAnio(a.fecha)}`);

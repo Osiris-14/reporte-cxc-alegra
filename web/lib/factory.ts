@@ -22,13 +22,18 @@
  * Exclusión VOID: se descartan de toda la lógica las facturas con Estado=void
  * en cxc_Cuentasporcobrar o EstadoFactura=void en cxc_Pagos.
  */
-import { CxcRow, inicioSemana } from "./cxc-logic";
+import {
+  CxcRow,
+  esFactorizable,
+  inicioSemana,
+  pendienteInicial,
+  UMBRAL_APERTURA,
+  UMBRAL_MAX_FACTORIZABLE,
+} from "./cxc-logic";
 import type { PagoRow, FactoringMovRow } from "./data";
 import { rangoSemana } from "./format";
 
 const DAY = 86_400_000;
-const UMBRAL_APERTURA = 300;
-const UMBRAL_MAX_FACTORIZABLE = 100_000;
 const ITBIS = 1.06;
 
 // --- Fondo Carryon -------------------------------------------------------
@@ -247,28 +252,20 @@ const badgePct = (pct: number): Badge => (pct >= 100 ? "g" : "r");
 /** Calcula apertura/pagos para una factura usando sus pagos (FechaFactura = Fecha). */
 export function calcFactura(row: CxcRow, pagos: PagoRow[]): FCalc {
   const fechaFactura = row.fecha;
-  let pagoInicial = 0;
   let posterior = 0;
-  let pagoAntesDeCrear = false; // pago con FechaPago < FechaCreación = error de captura
   let primerPago: Date | null = null; // FechaPago más temprana de la factura
   for (const p of pagos) {
     if (!p.fechaPago || !fechaFactura) continue;
     if (primerPago === null || p.fechaPago.getTime() < primerPago.getTime())
       primerPago = p.fechaPago;
-    if (p.fechaPago.getTime() < fechaFactura.getTime()) pagoAntesDeCrear = true;
-    else if (p.fechaPago.getTime() === fechaFactura.getTime()) pagoInicial += p.montoPago;
-    else posterior += p.montoPago; // FechaPago > FechaCreación
+    if (p.fechaPago.getTime() > fechaFactura.getTime())
+      posterior += p.montoPago; // FechaPago > FechaCreación
   }
   // Apertura = primer pago (cuando existe); si no hay pagos, FechaCreación.
   const fechaApertura = primerPago ?? fechaFactura;
-  // Excepción por error de captura: un pago NO puede ocurrir antes de que la
-  // factura exista. Cuando se detecta, la lógica de "pago inicial" no es
-  // confiable (el monto del pago no se resta como inicial), así que el Monto
-  // Esperado se toma del BalancePendiente del CSV, que Alegra ya calculó bien.
-  // En el caso normal se mantiene MontoTotal − pagoInicial.
-  const pendienteInicial = pagoAntesDeCrear
-    ? row.balancePendiente
-    : row.montoTotal - pagoInicial;
+  // El Monto Esperado / apertura usa el cálculo central compartido (incluye el
+  // fallback a BalancePendiente cuando un pago ocurrió antes de la creación).
+  const apertura = pendienteInicial(row, pagos);
   // ¿Pagó completo? Se decide por BalancePendiente del CSV (Alegra ya descuenta
   // notas de crédito), NO por la suma de pagos en efectivo:
   //  - CASO 1: BalancePendiente <= 300 -> pagó completo (la diferencia que no
@@ -279,12 +276,11 @@ export function calcFactura(row: CxcRow, pagos: PagoRow[]): FCalc {
   return {
     row,
     fechaApertura,
-    pendienteInicial,
+    pendienteInicial: apertura,
     heRecibido: posterior * ITBIS,
     pagoCompleto: row.balancePendiente <= UMBRAL_APERTURA,
-    activa:
-      pendienteInicial > UMBRAL_APERTURA &&
-      pendienteInicial < UMBRAL_MAX_FACTORIZABLE,
+    // Factorizabilidad = regla única compartida (apertura > 300 y < $100,000).
+    activa: esFactorizable(row, pagos),
   };
 }
 

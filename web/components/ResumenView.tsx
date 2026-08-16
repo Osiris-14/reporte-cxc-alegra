@@ -103,17 +103,18 @@ export default function ResumenView({
                 style={{ fontSize: 11, marginRight: 3, verticalAlign: "middle" }}
                 aria-hidden="true"
               />
-              Cobrado esta semana
+              Entregar al Factory
             </span>
             <div className="m-ico" style={{ background: "#eafaf0", color: "#1a7a44" }}>
               <i className="ti ti-calendar-check" aria-hidden="true" />
             </div>
           </div>
           <div className="m-num" style={{ color: "#1a7a44" }}>
-            {money(dash.cobradoSemana)}
+            {money(dash.cobradoSemanaFactory)}
           </div>
           <div className="m-delta" style={{ color: "#999" }}>
-            {dash.cobradoSemanaCount} instalaciones · esta semana
+            cobrado esta semana: {money(dash.cobradoSemana)} ·{" "}
+            {dash.cobradoSemanaCount} instalaciones
           </div>
         </div>
 
@@ -153,16 +154,18 @@ export default function ResumenView({
           <table className="tb-full drill tb-stack">
             <thead>
               <tr>
-                <th style={{ width: "22%" }}>NCF</th>
-                <th style={{ width: "40%" }}>Cliente</th>
-                <th className="a-c" style={{ width: "18%" }}>Fecha de pago</th>
-                <th className="a-l" style={{ width: "20%" }}>Monto</th>
+                <th style={{ width: "16%" }}>NCF</th>
+                <th style={{ width: "28%" }}>Cliente</th>
+                <th className="a-c" style={{ width: "14%" }}>Fecha de pago</th>
+                <th className="a-l" style={{ width: "14%" }}>Cobrado</th>
+                <th className="a-l" style={{ width: "15%" }}>Monto Factory</th>
+                <th className="a-l" style={{ width: "13%" }}>6% extraído</th>
               </tr>
             </thead>
             <tbody>
               {dash.cobradoSemanaRows.length === 0 && (
                 <tr className="empty-row">
-                  <td colSpan={4}>Sin cobros esta semana</td>
+                  <td colSpan={6}>Sin cobros esta semana</td>
                 </tr>
               )}
               {dash.cobradoSemanaRows.map((r) => (
@@ -172,7 +175,9 @@ export default function ResumenView({
                   <td className="muted a-c" data-label="Fecha de pago">
                     {diaMesAnio(r.fechaPago)}
                   </td>
-                  <td className="a-l" data-label="Monto">{money(r.monto)}</td>
+                  <td className="a-l" data-label="Cobrado">{money(r.monto)}</td>
+                  <td className="a-l" data-label="Monto Factory">{money(r.montoFactory)}</td>
+                  <td className="a-l" data-label="6% extraído">{money(r.extraido)}</td>
                 </tr>
               ))}
               {dash.cobradoSemanaRows.length > 0 && (
@@ -180,6 +185,12 @@ export default function ResumenView({
                   <td colSpan={3}>Total ({dash.cobradoSemanaCount})</td>
                   <td className="a-l" style={{ color: "#1a7a44" }}>
                     {money(dash.cobradoSemana)}
+                  </td>
+                  <td className="a-l" style={{ color: "#1a7a44" }}>
+                    {money(dash.cobradoSemanaFactory)}
+                  </td>
+                  <td className="a-l" style={{ color: "#1a7a44" }}>
+                    {money(dash.cobradoSemanaFactory - dash.cobradoSemana)}
                   </td>
                 </tr>
               )}
@@ -207,17 +218,18 @@ export default function ResumenView({
               style={{ fontSize: 11, marginRight: 3, verticalAlign: "middle" }}
               aria-hidden="true"
             />
-            Cobrado semana pasada
+            Entregar al Factory · semana pasada
           </span>
           <div className="m-ico" style={{ background: "#eafaf0", color: "#1a7a44" }}>
             <i className="ti ti-calendar-check" aria-hidden="true" />
           </div>
         </div>
         <div className="m-num" style={{ color: "#1a7a44" }}>
-          {money(dash.cobradoSemanaPasada)}
+          {money(dash.cobradoSemanaPasadaFactory)}
         </div>
         <div className="m-delta" style={{ color: "#999" }}>
-          {dash.cobradoSemanaPasadaCount} instalaciones · semana pasada
+          cobrado semana pasada: {money(dash.cobradoSemanaPasada)} ·{" "}
+          {dash.cobradoSemanaPasadaCount} instalaciones
         </div>
       </div>
 
@@ -226,16 +238,18 @@ export default function ResumenView({
           <table className="tb-full drill tb-stack">
             <thead>
               <tr>
-                <th style={{ width: "22%" }}>NCF</th>
-                <th style={{ width: "40%" }}>Cliente</th>
-                <th className="a-c" style={{ width: "18%" }}>Fecha de pago</th>
-                <th className="a-l" style={{ width: "20%" }}>Monto</th>
+                <th style={{ width: "16%" }}>NCF</th>
+                <th style={{ width: "28%" }}>Cliente</th>
+                <th className="a-c" style={{ width: "14%" }}>Fecha de pago</th>
+                <th className="a-l" style={{ width: "14%" }}>Cobrado</th>
+                <th className="a-l" style={{ width: "15%" }}>Monto Factory</th>
+                <th className="a-l" style={{ width: "13%" }}>6% extraído</th>
               </tr>
             </thead>
             <tbody>
               {dash.cobradoSemanaPasadaRows.length === 0 && (
                 <tr className="empty-row">
-                  <td colSpan={4}>Sin cobros la semana pasada</td>
+                  <td colSpan={6}>Sin cobros la semana pasada</td>
                 </tr>
               )}
               {dash.cobradoSemanaPasadaRows.map((r) => (
@@ -245,7 +259,9 @@ export default function ResumenView({
                   <td className="muted a-c" data-label="Fecha de pago">
                     {diaMesAnio(r.fechaPago)}
                   </td>
-                  <td className="a-l" data-label="Monto">{money(r.monto)}</td>
+                  <td className="a-l" data-label="Cobrado">{money(r.monto)}</td>
+                  <td className="a-l" data-label="Monto Factory">{money(r.montoFactory)}</td>
+                  <td className="a-l" data-label="6% extraído">{money(r.extraido)}</td>
                 </tr>
               ))}
               {dash.cobradoSemanaPasadaRows.length > 0 && (
@@ -253,6 +269,12 @@ export default function ResumenView({
                   <td colSpan={3}>Total ({dash.cobradoSemanaPasadaCount})</td>
                   <td className="a-l" style={{ color: "#1a7a44" }}>
                     {money(dash.cobradoSemanaPasada)}
+                  </td>
+                  <td className="a-l" style={{ color: "#1a7a44" }}>
+                    {money(dash.cobradoSemanaPasadaFactory)}
+                  </td>
+                  <td className="a-l" style={{ color: "#1a7a44" }}>
+                    {money(dash.cobradoSemanaPasadaFactory - dash.cobradoSemanaPasada)}
                   </td>
                 </tr>
               )}

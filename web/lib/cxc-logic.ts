@@ -30,6 +30,45 @@ export type EstadoAgenda = "Reagendado" | "Vencidas" | "Atrasado" | null;
 export const UMBRAL_PAGADO = 450;
 /** Factor ITBIS 6% aplicado a todos los montos visibles. */
 export const ITBIS = 1.06;
+/** Umbral bajo el cual una apertura ya se considera "pagada" (reinicio de cxc-logic). */
+export const UMBRAL_APERTURA = 300;
+/** Monto máximo factorizable en Factory: facturas con apertura >= este monto se excluyen. */
+export const UMBRAL_MAX_FACTORIZABLE = 100_000;
+
+/**
+ * Regla UNICA de factorizabilidad (usada por Factory y por "Cobrado esta semana"):
+ * una factura es factorizable si su apertura (pendiente inicial) es
+ * > 300 y < $100,000. Cualquier cambio a la regla se hace SOLO aquí.
+ */
+/**
+ * Calcula el monto de apertura de una factura (mismo cálculo que factory.calcFactura).
+ * pendienteInicial = MontoTotal − pagoInicial (pago con FechaPago = FechaFactura);
+ * si hubo un pago ANTES de la creación (error de captura), cae a BalancePendiente.
+ */
+export function pendienteInicial(
+  row: Pick<CxcRow, "fecha" | "montoTotal" | "balancePendiente">,
+  pagos: { fechaPago: Date | null; montoPago: number }[],
+): number {
+  const fechaFactura = row.fecha;
+  let pagoInicial = 0;
+  let pagoAntesDeCrear = false;
+  for (const p of pagos) {
+    if (!p.fechaPago || !fechaFactura) continue;
+    if (p.fechaPago.getTime() < fechaFactura.getTime()) pagoAntesDeCrear = true;
+    else if (p.fechaPago.getTime() === fechaFactura.getTime())
+      pagoInicial += p.montoPago;
+  }
+  return pagoAntesDeCrear ? row.balancePendiente : row.montoTotal - pagoInicial;
+}
+
+/** ¿La factura es factorizable (apertura activa > 300 y < $100,000)? Regla única. */
+export function esFactorizable(
+  row: Pick<CxcRow, "fecha" | "montoTotal" | "balancePendiente">,
+  pagos: { fechaPago: Date | null; montoPago: number }[],
+): boolean {
+  const pi = pendienteInicial(row, pagos);
+  return pi > UMBRAL_APERTURA && pi < UMBRAL_MAX_FACTORIZABLE;
+}
 
 /**
  * Fecha de "hoy" en zona horaria de República Dominicana (America/Santo_Domingo,
