@@ -10,6 +10,11 @@
  *                        si no tiene pagos). Define la semana/mes de apertura.
  *  - pendienteInicial  = MontoTotal − pagoInicial.
  *  - Apertura activa   = pendienteInicial > 300.
+ *  - Mismo día c/deuda = Fecha = FechaVencimiento y pendienteInicial <= 300
+ *                        (el pago inicial cubrió todo) PERO con pagos después
+ *                        del vencimiento que suman > 300. Cuentan como apertura
+ *                        activa con pendienteInicial = SUM(pagos posteriores) y
+ *                        se agrupan en la semana de su FechaVencimiento.
  *  - pagóCompleto      = BalancePendiente (CSV) <= 300. Lo confirma Alegra, que
  *                        ya descuenta notas de crédito (no depende de los pagos).
  *  - heRecibido        = SUM(MontoPago posteriores) * 1.06 (todos, aunque no
@@ -225,6 +230,8 @@ interface FCalc {
   pendienteInicial: number;
   heRecibido: number;
   pagoCompleto: boolean;
+  /** Entró por la regla "mismo día con deuda posterior" (ver calcFactura). */
+  mismoDiaDeuda: boolean;
   activa: boolean;
 }
 
@@ -252,7 +259,9 @@ const badgePct = (pct: number): Badge => (pct >= 100 ? "g" : "r");
 /** Calcula apertura/pagos para una factura usando sus pagos (FechaFactura = Fecha). */
 export function calcFactura(row: CxcRow, pagos: PagoRow[]): FCalc {
   const fechaFactura = row.fecha;
+  const fechaVenc = row.fechaVencimiento;
   let posterior = 0;
+  let posteriorVenc = 0; // pagos con FechaPago > FechaVencimiento
   let primerPago: Date | null = null; // FechaPago más temprana de la factura
   for (const p of pagos) {
     if (!p.fechaPago || !fechaFactura) continue;
@@ -260,12 +269,30 @@ export function calcFactura(row: CxcRow, pagos: PagoRow[]): FCalc {
       primerPago = p.fechaPago;
     if (p.fechaPago.getTime() > fechaFactura.getTime())
       posterior += p.montoPago; // FechaPago > FechaCreación
+    if (fechaVenc && p.fechaPago.getTime() > fechaVenc.getTime())
+      posteriorVenc += p.montoPago; // FechaPago > FechaVencimiento
   }
   // Apertura = primer pago (cuando existe); si no hay pagos, FechaCreación.
   const fechaApertura = primerPago ?? fechaFactura;
   // El Monto Esperado / apertura usa el cálculo central compartido (incluye el
   // fallback a BalancePendiente cuando un pago ocurrió antes de la creación).
   const apertura = pendienteInicial(row, pagos);
+
+  // --- Mismo día con deuda posterior -------------------------------------
+  // Factura abierta y vencida el MISMO día cuyo pago inicial cubrió todo
+  // (apertura <= 300), pero que después del vencimiento recibió pagos: ese
+  // monto sí es deuda del factory y hay que entregarlo. Para estas facturas:
+  //   - pendienteInicial = SUM(pagos con FechaPago > FechaVencimiento)
+  //   - la semana/mes es la de FechaVencimiento, NO la de los pagos posteriores.
+  const mismoDia =
+    fechaFactura !== null &&
+    fechaVenc !== null &&
+    fechaFactura.getTime() === fechaVenc.getTime();
+  const mismoDiaDeuda =
+    mismoDia &&
+    apertura <= UMBRAL_APERTURA &&
+    posteriorVenc > UMBRAL_APERTURA;
+
   // ¿Pagó completo? Se decide por BalancePendiente del CSV (Alegra ya descuenta
   // notas de crédito), NO por la suma de pagos en efectivo:
   //  - CASO 1: BalancePendiente <= 300 -> pagó completo (la diferencia que no
@@ -275,12 +302,17 @@ export function calcFactura(row: CxcRow, pagos: PagoRow[]): FCalc {
   // aunque no cubran el total, en ambos casos.
   return {
     row,
-    fechaApertura,
-    pendienteInicial: apertura,
+    fechaApertura: mismoDiaDeuda ? fechaVenc : fechaApertura,
+    pendienteInicial: mismoDiaDeuda ? posteriorVenc : apertura,
     heRecibido: posterior * ITBIS,
     pagoCompleto: row.balancePendiente <= UMBRAL_APERTURA,
+    mismoDiaDeuda,
     // Factorizabilidad = regla única compartida (apertura > 300 y < $100,000).
-    activa: esFactorizable(row, pagos),
+    // Las "mismo día con deuda posterior" entran por la regla nueva, pero
+    // respetan el mismo tope de $100,000 que el resto.
+    activa: mismoDiaDeuda
+      ? posteriorVenc < UMBRAL_MAX_FACTORIZABLE
+      : esFactorizable(row, pagos),
   };
 }
 
