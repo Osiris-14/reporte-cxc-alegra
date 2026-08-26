@@ -261,6 +261,20 @@ export function computeDashboard(
   const factorizable = (c: CxcRow) =>
     esFactorizable(c, pagosByComp.get(c.numeroComprobante) ?? []);
 
+  /**
+   * Factura abierta y vencida el MISMO día que recibe un pago DESPUÉS de su
+   * vencimiento. El cobro entra en la semana del pago, no en la del
+   * vencimiento — que ya pasó —, así que sin esta excepción quedaría fuera de
+   * "Entregar al Factory" pese a ser plata cobrada esta semana.
+   * Ej.: B0200003633 (apertura y vencimiento 12-ago, cobrada el 24-ago).
+   */
+  const mismoDiaPagoPosterior = (c: CxcRow, fechaPago: Date | null) =>
+    c.fecha !== null &&
+    c.fechaVencimiento !== null &&
+    fechaPago !== null &&
+    c.fecha.getTime() === c.fechaVencimiento.getTime() &&
+    fechaPago.getTime() > c.fechaVencimiento.getTime();
+
   // Agrupa los pagos que califican por comprobante (suma MontoPago, guarda cliente).
   const pagadasMap = new Map<string, { cliente: string; monto: number }>();
   for (const d of pagos) {
@@ -295,7 +309,8 @@ export function computeDashboard(
   // "Cobrado esta semana" — MISMA lógica que "Cobrado", pero el criterio de
   // fecha pasa de "hoy" a "la semana en curso" (lunes a domingo):
   //   FechaPago ∈ semana  &&  BalancePendiente(detalle) < 450  &&
-  //   (cxc.FechaVencimiento ∈ semana  ||  cxc.FechaReagendamiento ∈ semana)
+  //   (cxc.FechaVencimiento ∈ semana  ||  cxc.FechaReagendamiento ∈ semana
+  //    ||  factura mismo día cobrada después de su vencimiento)
   // Extra: SOLO facturas factorizables (apertura < $100,000) — ver regla única.
   const lunes = inicioSemana(hoy);
   const domingo = finSemana(hoy);
@@ -313,7 +328,9 @@ export function computeDashboard(
     const califica =
       enSemana(d.fechaPago) &&
       d.balancePendiente < UMBRAL_PAGADO &&
-      (enSemana(c.fechaVencimiento) || enSemana(c.fechaReagendamiento));
+      (enSemana(c.fechaVencimiento) ||
+        enSemana(c.fechaReagendamiento) ||
+        mismoDiaPagoPosterior(c, d.fechaPago));
     if (!califica) continue;
     const cur = cobradoSemanaMap.get(d.numeroComprobante) ?? {
       cliente: d.cliente || c.cliente || "—",
@@ -364,7 +381,9 @@ export function computeDashboard(
     const califica =
       enSemanaPasada(d.fechaPago) &&
       d.balancePendiente < UMBRAL_PAGADO &&
-      (enSemanaPasada(c.fechaVencimiento) || enSemanaPasada(c.fechaReagendamiento));
+      (enSemanaPasada(c.fechaVencimiento) ||
+        enSemanaPasada(c.fechaReagendamiento) ||
+        mismoDiaPagoPosterior(c, d.fechaPago));
     if (!califica) continue;
     const cur = cobradoSemanaPasadaMap.get(d.numeroComprobante) ?? {
       cliente: d.cliente || c.cliente || "—",
