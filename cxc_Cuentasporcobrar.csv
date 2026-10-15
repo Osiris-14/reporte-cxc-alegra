@@ -1,5 +1,5 @@
 ﻿NumeroComprobante,Fecha,FechaVencimiento,Cliente,MontoTotal,BalancePendiente,Estado,Observaciones
-B0200003856,2026-10-14,2026-10-26,MARES SRL,110007.0,7.0,open,"FACT: 1208
+B0200003856,2026-10-14,2026-10-26,MARES SRL,110007.0,0.0,closed,"FACT: 1208
 TRANF: RD$ 110,000
 BANCO: POPULAR
 COLOR: BLANCO COASTER
