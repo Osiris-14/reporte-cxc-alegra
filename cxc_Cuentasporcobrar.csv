@@ -1,4 +1,7 @@
 ﻿NumeroComprobante,Fecha,FechaVencimiento,Cliente,MontoTotal,BalancePendiente,Estado,Observaciones
+B0200003974,2026-11-13,2026-11-13, MIGUEL MARTINEZ,800.0,0.0,closed,"FACT: 1310
+EFC:RD$ 800
+COTIZACION: 30770"
 B0200003973,2026-11-13,2026-11-26,JUAN SANTANA,40000.0,24250.0,open,"FACT: 1309
 TRANF: RD$ 15,750
 BANCO: B.R
