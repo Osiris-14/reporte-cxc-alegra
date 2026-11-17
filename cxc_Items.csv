@@ -5662,13 +5662,13 @@ B0200003680,2026-08-25,87,Materiales de instalacion,"---------------------Que in
 3-Pintura automotriz (Urethano) Garantiza un acabado excelente y duradero.
 
 4-Garantía de 1 años contra oxidación Te ofrece tranquilidad y confianza.",1,6500.0,6500.0
-B0200003681,2026-08-27,1096,FRENTE DE CAMION 78 CARA ANCHA DEFENSA DELANTERA,ISUZU,1,25000.0,25000.0
-B0200003681,2026-08-27,800,PORTA PIES PARA CAMION,,1,4000.0,4000.0
+B0200003681,2026-08-27,1096,FRENTE DE CAMION 78 CARA ANCHA DEFENSA DELANTERA,ISUZU,1,25000.0,23750.0
+B0200003681,2026-08-27,800,PORTA PIES PARA CAMION,,1,4000.0,3800.0
 B0200003681,2026-08-27,282,MATERIALES DE INSTALACION (1 SOLA PIEZA),"Materiales de instalacion (---------------------
 
 -Garantia contra Oxido de 24 meses.
 -Pintura automotriz (Urethano): Garantiza un acabado
-excelente y duradero.",1,2500.0,2500.0
+excelente y duradero.",1,2500.0,2375.0
 B0200003682,2026-08-27,337,INSTALACION,DEFENSA DELANTERA N400,1,2500.0,2950.0
 B0200003683,2026-08-26,746,KIT ISUZU CARA ANCHA DEFENSA DELANTERA,,1,25000.0,23750.0
 B0200003683,2026-08-26,800,PORTA PIES PARA CAMION,,1,4000.0,4000.0
@@ -8249,3 +8249,31 @@ B0200003984,2026-11-16,282,MATERIALES DE INSTALACION (1 SOLA PIEZA),"Materiales 
 -Garantia contra Oxido de 24 meses.
 -Pintura automotriz (Urethano): Garantiza un acabado
 excelente y duradero.",1,2500.0,2500.0
+B0200003985,2026-11-17,98,CAJA DE HERRAMIENTAS,CAMION KIA UNA CABINA,1,7000.0,6370.0
+B0200003985,2026-11-17,282,MATERIALES DE INSTALACION (1 SOLA PIEZA),"Materiales de instalacion (---------------------
+
+-Garantia contra Oxido de 24 meses.
+-Pintura automotriz (Urethano): Garantiza un acabado
+excelente y duradero.",1,2500.0,2500.0
+B0200003986,2026-11-17,626,DEFENSA FRONTAL KIA-BONGO K2700,,1,17000.0,19057.0
+B0200003986,2026-11-17,622,KIA TRASERA DEFENSA K-2700-BONGO,,1,13000.0,14573.0
+B0200003986,2026-11-17,800,PORTA PIES PARA CAMION,,1,4000.0,4720.0
+B0200003986,2026-11-17,761,BOLA DE JALON 2000 LB (opcional),,1,750.0,885.0
+B0200003986,2026-11-17,562,Materiales de instalacion 2 piezas,"---------------------
+
+Que incluye el KIT!!!!
+
+
+1-Garantía de 3 años contra oxidación: Te ofrece tranquilidad y confianza.
+
+2-Instalación completa: Asegura un montaje adecuado y profesional.
+
+3-Pintura automotriz (Urethano): Garantiza un acabado excelente y duradero.",1,4000.0,4720.0
+B0200003987,2026-11-17,442,SUZUKI CARRY KIT DEFENSA DELANTERA,PLATANERA,1,16000.0,14720.0
+B0200003987,2026-11-17,282,MATERIALES DE INSTALACION (1 SOLA PIEZA),"Materiales de instalacion (---------------------
+
+-Garantia contra Oxido de 24 meses.
+-Pintura automotriz (Urethano): Garantiza un acabado
+excelente y duradero.",1,2500.0,2500.0
+B0200003987,2026-11-17,1608,SUZUKI CARRY PLATANERA DEFENSA TRASERA,,1,10000.0,10000.0
+B0200003987,2026-11-17,761,BOLA DE JALON 2000 LB (opcional),,1,750.0,750.0
